@@ -13,7 +13,7 @@ namespace MaverickBank.Models
         public string LoanName { get; set; } = string.Empty;
 
         [Required]
-        [Column(TypeName = "decemail(5,2)")]
+        [Column(TypeName = "decimal(5,2)")]
         public decimal InterestRate { get; set; }
 
         [Required]

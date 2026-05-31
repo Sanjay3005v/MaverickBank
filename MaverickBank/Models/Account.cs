@@ -16,7 +16,7 @@ namespace MaverickBank.Models
 
         [Required]
         [ForeignKey("Branch")]
-        public int BranchID { get; set; }
+        public int BranchId { get; set; }
 
         [Required]
         [ForeignKey("AccountType")]

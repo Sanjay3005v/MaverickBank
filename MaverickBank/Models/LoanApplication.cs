@@ -6,10 +6,10 @@ namespace MaverickBank.Models
     public class LoanApplication
     {
         [Key]
-        public int LoanApplicationId { get; set; }
+        public long LoanApplicationId { get; set; }
 
         [Required]
-        [ForeignKey("User"))]
+        [ForeignKey("User")]
         public int UserId { get; set; }
 
         [Required]

@@ -18,7 +18,7 @@ namespace MaverickBank.Models
 
         [Required]
         [StringLength(18)]
-        public string AccountNummber { get; set; } = string.Empty;
+        public string AccountNumber { get; set; } = string.Empty;
 
         [Required]
         [StringLength(150)]
