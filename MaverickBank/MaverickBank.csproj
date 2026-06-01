@@ -22,7 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Services\Loan\" />
     <Folder Include="Services\Branch\" />
     <Folder Include="Services\User\" />
   </ItemGroup>
