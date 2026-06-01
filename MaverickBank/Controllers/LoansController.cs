@@ -53,5 +53,16 @@ namespace MaverickBank.Controllers
 
             return NoContent();
         }
+
+        [HttpPost("repay")]
+        public async Task<IActionResult> RepayLoan(LoanRepaymentDto dto)
+        {
+            var repaid = await _loanService.RepayLoanAsync(dto);
+
+            if (!repaid)
+                return NotFound();
+
+            return NoContent();
+        }
     }
 }

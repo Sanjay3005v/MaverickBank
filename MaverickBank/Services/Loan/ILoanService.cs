@@ -11,5 +11,7 @@ namespace MaverickBank.Services.Loan
         Task<LoanResponseDto?> GetLoanByIdAsync(int loanId);
 
         Task<bool> UpdateLoanStatusAsync(int loanId, ApproveLoanDto dto);
+
+        Task<bool> RepayLoanAsync(LoanRepaymentDto dto);
     }
 }

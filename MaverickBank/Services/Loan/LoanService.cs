@@ -132,5 +132,30 @@ namespace MaverickBank.Services.Loan
 
             return true;
         }
+
+        public async Task<bool> RepayLoanAsync(LoanRepaymentDto dto)
+        {
+            var loan = await _context.Loans.FirstOrDefaultAsync(l =>l.LoanId == dto.LoanId);
+
+            if (loan is null)
+                return false;
+
+            if (dto.AmountPaid <= 0)
+                throw new Exception("Amount must be greater than zero");
+
+            if (dto.AmountPaid > loan.OutstandingAmount)
+                throw new Exception("Amount exceeds outstanding balance");
+
+            loan.OutstandingAmount -= dto.AmountPaid;
+
+            if (loan.OutstandingAmount == 0)
+            {
+                loan.LoanStatus = "Closed";
+            }
+
+            await _context.SaveChangesAsync();
+
+            return true;
+        }
     }
 }
