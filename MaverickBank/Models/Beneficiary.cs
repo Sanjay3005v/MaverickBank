@@ -25,7 +25,7 @@ namespace MaverickBank.Models
         public string BankName { get; set;  } = string.Empty;
 
         [Required]
-        [StringLength(11)]
+        [StringLength(100)]
         public string BranchName {  get; set; } = string.Empty;
 
         [Required]

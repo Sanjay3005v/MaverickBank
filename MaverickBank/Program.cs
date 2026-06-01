@@ -1,6 +1,7 @@
 
 using MaverickBank.Data;
 using MaverickBank.Services.Account;
+using MaverickBank.Services.Beneficiary;
 using MaverickBank.Services.Transaction;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,6 +18,7 @@ namespace MaverickBank
 
             builder.Services.AddScoped<IAccountService, AccountService>();
             builder.Services.AddScoped<ITransactionService, TransactionService>();
+            builder.Services.AddScoped<IBeneficiaryService, BeneficiaryService>();
 
             builder.Services.AddSwaggerGen();
 
