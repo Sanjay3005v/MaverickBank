@@ -1,6 +1,6 @@
 ﻿using MaverickBank.DTOs.Account;
 using MaverickBank.Services.Account;
-using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MaverickBank.Controllers
@@ -17,6 +17,7 @@ namespace MaverickBank.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Employee,Admin")]
         public async Task<ActionResult<IEnumerable<AccountResponseDto>>> GetAllAccounts()
         {
             var accounts = await _accountService.GetAllAccountsAsync();
@@ -29,39 +30,41 @@ namespace MaverickBank.Controllers
             var account = await _accountService.GetAccountByIdAsync(id);
 
             if (account is null)
-                return NotFound();
+                return NotFound(new { message = $"Account with ID {id} not found." });
 
             return Ok(account);
         }
 
         [HttpPost]
+        [Authorize(Roles = "Employee,Admin")]
         public async Task<ActionResult<AccountResponseDto>> CreateAccount(CreateAccountDto dto)
         {
             var createdAccount = await _accountService.CreateAccountAsync(dto);
 
             return CreatedAtAction(nameof(GetAccountById),
-                new { id = createdAccount.AccountId },
-                createdAccount);
+                new { id = createdAccount.AccountId }, createdAccount);
         }
 
         [HttpPut("{id:long}/status")]
+        [Authorize(Roles = "Employee,Admin")]
         public async Task<IActionResult> UpdateAccountStatus(long id, UpdateAccountDto dto)
         {
             var updated = await _accountService.UpdateAccountStatusAsync(id, dto);
 
             if (!updated)
-                return NotFound();
+                return NotFound(new { message = $"Account with ID {id} not found." });
 
             return NoContent();
         }
 
         [HttpPut("{id:long}/close")]
+        [Authorize(Roles = "Employee,Admin")]
         public async Task<IActionResult> CloseAccount(long id, CloseAccountDto dto)
         {
             var closed = await _accountService.CloseAccountAsync(id, dto);
 
             if (!closed)
-                return NotFound();
+                return NotFound(new { message = $"Account with ID {id} not found." });
 
             return NoContent();
         }

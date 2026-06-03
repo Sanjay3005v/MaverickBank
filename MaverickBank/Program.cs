@@ -1,10 +1,16 @@
-
 using MaverickBank.Data;
+using MaverickBank.MappingProfile;
 using MaverickBank.Services.Account;
+using MaverickBank.Services.AccountClosureRequest;
 using MaverickBank.Services.Beneficiary;
+using MaverickBank.Services.Branch;
 using MaverickBank.Services.Loan;
 using MaverickBank.Services.Transaction;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi;
+using System.Text;
 
 namespace MaverickBank
 {
@@ -16,19 +22,62 @@ namespace MaverickBank
 
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+            builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
             builder.Services.AddScoped<IAccountService, AccountService>();
             builder.Services.AddScoped<ITransactionService, TransactionService>();
             builder.Services.AddScoped<IBeneficiaryService, BeneficiaryService>();
             builder.Services.AddScoped<ILoanService, LoanService>();
+            builder.Services.AddScoped<IAccountClosureRequestService, AccountClosureRequestService>();
+            builder.Services.AddScoped<IBranchService, BranchService>();
 
-            builder.Services.AddSwaggerGen();
+            var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+            var secretKey = jwtSettings["SecretKey"]!;
+
+            builder.Services.AddOpenApi();
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = jwtSettings["Issuer"],
+                    ValidAudience = jwtSettings["Audience"],
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+                };
+            });
+
+            builder.Services.AddAuthorization();
+
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    In = ParameterLocation.Header,
+                    Description = "Enter JWT with Bearer prefix. Example: \"Bearer {token}\"",
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.ApiKey
+                });
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                {
+                    {
+                        new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } },
+                        new string[] { }
+                    }
+                });
+            });
 
             // Add services to the container.
 
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            builder.Services.AddOpenApi();
+            
 
             var app = builder.Build();
 
@@ -37,11 +86,7 @@ namespace MaverickBank
             {
                 app.MapOpenApi();
                 app.UseSwagger();
-                app.UseSwaggerUI(options =>
-                {
-                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Maverick Bank v1");
-                    options.RoutePrefix = string.Empty;
-                });
+                app.UseSwaggerUI();
             }
 
 

@@ -1,5 +1,6 @@
 ﻿using MaverickBank.DTOs.Beneficiary;
 using MaverickBank.Services.Beneficiary;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,6 +8,7 @@ namespace MaverickBank.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Customer")]
     public class BeneficiariesController : ControllerBase
     {
         private readonly IBeneficiaryService _beneficiaryService;
@@ -38,7 +40,7 @@ namespace MaverickBank.Controllers
             var deleted = await _beneficiaryService.DeleteBeneficiaryAsync(beneficiaryId);
 
             if (!deleted)
-                return NotFound();
+                return NotFound(new { message = $"Beneficiary with ID {beneficiaryId} not found." });
 
             return NoContent();
         }

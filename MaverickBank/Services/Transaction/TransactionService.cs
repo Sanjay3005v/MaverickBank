@@ -1,4 +1,5 @@
-﻿using MaverickBank.Data;
+﻿using AutoMapper;
+using MaverickBank.Data;
 using MaverickBank.DTOs.Transaction;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,18 +8,20 @@ namespace MaverickBank.Services.Transaction
     public class TransactionService : ITransactionService
     {
         private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
+        private readonly ILogger<TransactionService> _logger;
 
-        public TransactionService(AppDbContext context)
+        public TransactionService(AppDbContext context, IMapper mapper, ILogger<TransactionService> logger)
         {
             _context = context;
+            _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<TransactionResponseDto> DepositAsync(DepositDto dto)
         {
-            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.AccountId == dto.AccountId);
-
-            if (account is null)
-                throw new Exception("Account not found");
+            var account = await _context.Accounts.FindAsync(dto.AccountId)
+                ?? throw new KeyNotFoundException("Account not found.");
 
             account.Balance += dto.Amount;
 
@@ -34,21 +37,19 @@ namespace MaverickBank.Services.Transaction
             };
 
             _context.Transactions.Add(transaction);
-
             await _context.SaveChangesAsync();
 
-            return MapToResponse(transaction);
+            _logger.LogInformation("Deposit of {Amount} to account {AccountId}", dto.Amount, dto.AccountId);
+            return _mapper.Map<TransactionResponseDto>(transaction);
         }
 
         public async Task<TransactionResponseDto> WithdrawAsync(WithdrawDto dto)
         {
-            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.AccountId == dto.AccountId);
-
-            if (account is null)
-                throw new Exception("Account not found");
+            var account = await _context.Accounts.FindAsync(dto.AccountId)
+                ?? throw new KeyNotFoundException("Account not found.");
 
             if (account.Balance < dto.Amount)
-                throw new Exception("Insufficient balance");
+                throw new InvalidOperationException("Insufficient balance.");
 
             account.Balance -= dto.Amount;
 
@@ -64,20 +65,19 @@ namespace MaverickBank.Services.Transaction
             };
 
             _context.Transactions.Add(transaction);
-
             await _context.SaveChangesAsync();
 
-            return MapToResponse(transaction);
+            _logger.LogInformation("Withdrawal of {Amount} from account {AccountId}", dto.Amount, dto.AccountId);
+            return _mapper.Map<TransactionResponseDto>(transaction);
         }
 
         public async Task<TransactionResponseDto> TransferAsync(TransferDto dto)
         {
-            var fromAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.AccountId == dto.FromAccountId);
+            var fromAccount = await _context.Accounts.FindAsync(dto.FromAccountId)
+                ?? throw new KeyNotFoundException("Source account not found.");
 
-            var toAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.AccountId == dto.ToAccountId);
-
-            if (fromAccount is null || toAccount is null)
-                throw new Exception("Invalid account");
+            var toAccount = await _context.Accounts.FindAsync(dto.ToAccountId)
+                ?? throw new KeyNotFoundException("Destination account not found.");
 
             if (fromAccount.Balance < dto.Amount)
                 throw new Exception("Insufficient balance");
@@ -101,45 +101,23 @@ namespace MaverickBank.Services.Transaction
 
             await _context.SaveChangesAsync();
 
-            return MapToResponse(transaction);
+            _logger.LogInformation("Transfer of {Amount} from {From} to {To}", dto.Amount, dto.FromAccountId, dto.ToAccountId);
+            return _mapper.Map<TransactionResponseDto>(transaction);
         }
 
         public async Task<IEnumerable<TransactionResponseDto>> GetTransactionsByAccountIdAsync(long accountId)
         {
-            return await _context.Transactions
-                .Where(t => t.FromAccountId == accountId || t.ToAccountId == accountId)
-                .OrderByDescending(t => t.TransactionDate)
-                .Select(t => new TransactionResponseDto(
-                    t.TransactionId,
-                    t.TransactionTypeId,
-                    t.FromAccountId,
-                    t.ToAccountId,
-                    t.Amount,
-                    t.TransactionReference,
-                    t.Description,
-                    t.TransactionStatus,
-                    t.TransactionDate
-                )).ToListAsync();
+            var transactions = await _context.Transactions
+               .Where(t => t.FromAccountId == accountId || t.ToAccountId == accountId)
+               .OrderByDescending(t => t.TransactionDate)
+               .ToListAsync();
+
+            return _mapper.Map<IEnumerable<TransactionResponseDto>>(transactions);
         }
 
         private string GenerateTransactionReference()
         {
             return $"TXN{DateTime.UtcNow.Ticks}";
-        }
-
-        private TransactionResponseDto MapToResponse(Models.Transaction transaction)
-        {
-            return new TransactionResponseDto(
-                transaction.TransactionId,
-                transaction.TransactionTypeId,
-                transaction.FromAccountId,
-                transaction.ToAccountId,
-                transaction.Amount,
-                transaction.TransactionReference,
-                transaction.Description,
-                transaction.TransactionStatus,
-                transaction.TransactionDate
-            );
         }
     }
 }

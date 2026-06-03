@@ -1,4 +1,5 @@
-﻿using MaverickBank.Data;
+﻿using AutoMapper;
+using MaverickBank.Data;
 using MaverickBank.DTOs.Loan;
 using MaverickBank.Models;
 using Microsoft.EntityFrameworkCore;
@@ -8,72 +9,46 @@ namespace MaverickBank.Services.Loan
     public class LoanService : ILoanService
     {
         private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
+        private readonly ILogger<LoanService> _logger;
 
-        public LoanService(AppDbContext context)
+        public LoanService(AppDbContext context, IMapper mapper, ILogger<LoanService> logger)
         {
             _context = context;
+            _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<LoanResponseDto> ApplyLoanAsync(ApplyLoanDto dto)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.UserId == dto.UserId);
+            var user = await _context.Users.FindAsync(dto.UserId)
+                ?? throw new KeyNotFoundException("User not found.");
 
-            if (user is null)
-                throw new Exception("User not found");
-
-            var application = new Models.LoanApplication
-            {
-                UserId = dto.UserId,
-                LoanTypeId = dto.LoanTypeId,
-                RequestedAmount = dto.RequestedAmount,
-                TenureMonths = dto.TenureMonths,
-                Purpose = dto.Purpose,
-                MonthlyIncome = dto.MonthlyIncome,
-                ApplicationStatus = "Pending",
-                AppliedDate = DateTime.UtcNow
-            };
+            var application = _mapper.Map<Models.LoanApplication>(dto);
+            application.ApplicationStatus = "Pending";
+            application.AppliedDate = DateTime.UtcNow;
 
             _context.LoanApplications.Add(application);
 
             await _context.SaveChangesAsync();
 
-            return new LoanResponseDto(
-                0,
-                application.LoanApplicationId,
-                0,
-                0,
-                0,
-                application.TenureMonths,
-                0,
-                0,
-                DateTime.MinValue,
-                DateTime.MinValue,
-                application.ApplicationStatus
-            );
+            _logger.LogInformation("Loan application {AppId} submitted by user {UserId}", application.LoanApplicationId, dto.UserId);
+            return _mapper.Map<LoanResponseDto>(application);
         }
 
         public async Task<IEnumerable<LoanResponseDto>> GetLoansByUserIdAsync(int userId)
         {
-            return await _context.Loans
+            var loans = await _context.Loans
                 .Join(
                     _context.LoanApplications,
                     loan => loan.LoanApplicationId,
-                    application => application.LoanApplicationId,
-                    (loan, application) => new { loan, application })
-                .Where(x => x.application.UserId == userId)
-                .Select(x => new LoanResponseDto(
-                    x.loan.LoanId,
-                    x.loan.LoanApplicationId,
-                    x.loan.AccountId,
-                    x.loan.ApprovedAmount,
-                    x.loan.InterestRate,
-                    x.loan.TenureMonths,
-                    x.loan.EMIAmount,
-                    x.loan.OutstandingAmount,
-                    x.loan.StartDate,
-                    x.loan.EndDate,
-                    x.loan.LoanStatus
-                )).ToListAsync();
+                    app => app.LoanApplicationId,
+                    (loan, app) => new { loan, app })
+                .Where(x => x.app.UserId == userId)
+                .Select(x => x.loan)
+                .ToListAsync();
+
+            return _mapper.Map<IEnumerable<LoanResponseDto>>(loans);
         }
 
         public async Task<LoanResponseDto?> GetLoanByIdAsync(int loanId)
@@ -92,23 +67,21 @@ namespace MaverickBank.Services.Loan
                     l.StartDate,
                     l.EndDate,
                     l.LoanStatus
-                ))
-                .FirstOrDefaultAsync();
+                )).FirstOrDefaultAsync();
         }
 
-        public async Task<bool> UpdateLoanStatusAsync(int loanApplicationId,ApproveLoanDto dto)
+        public async Task<bool> UpdateLoanStatusAsync(int loanApplicationId, ApproveLoanDto dto)
         {
-            var application = await _context.LoanApplications.FirstOrDefaultAsync(l =>l.LoanApplicationId == loanApplicationId);
+            var application = await _context.LoanApplications.FirstOrDefaultAsync(l => l.LoanApplicationId == loanApplicationId);
 
             if (application is null)
                 return false;
 
             application.ApplicationStatus = "Approved";
 
-            var account = await _context.Accounts.FirstOrDefaultAsync(a =>a.UserId == application.UserId);
-
-            if (account is null)
-                throw new Exception("User account not found");
+            var account = await _context.Accounts
+                .FirstOrDefaultAsync(a => a.UserId == application.UserId)
+                ?? throw new KeyNotFoundException("User account not found.");
 
             var loan = new Models.Loan
             {
@@ -130,12 +103,13 @@ namespace MaverickBank.Services.Loan
 
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation("Loan approved for application {AppId}", loanApplicationId);
             return true;
         }
 
         public async Task<bool> RepayLoanAsync(LoanRepaymentDto dto)
         {
-            var loan = await _context.Loans.FirstOrDefaultAsync(l =>l.LoanId == dto.LoanId);
+            var loan = await _context.Loans.FindAsync(dto.LoanId);
 
             if (loan is null)
                 return false;
@@ -153,8 +127,19 @@ namespace MaverickBank.Services.Loan
                 loan.LoanStatus = "Closed";
             }
 
+            var repayment = new Models.LoanRepayment
+            {
+                LoanId = dto.LoanId,
+                AmountPaid = dto.AmountPaid,
+                PaymentMethod = dto.PaymentMethod,
+                Remarks = dto.Remarks,
+                PaymentDate = DateTime.UtcNow
+            };
+
+            _context.LoanRepayments.Add(repayment);
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation("Repayment of {Amount} made for loan {LoanId}", dto.AmountPaid, dto.LoanId);
             return true;
         }
     }

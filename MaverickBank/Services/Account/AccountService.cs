@@ -1,4 +1,5 @@
-﻿using MaverickBank.Data;
+﻿using AutoMapper;
+using MaverickBank.Data;
 using MaverickBank.DTOs.Account;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,72 +8,39 @@ namespace MaverickBank.Services.Account
     public class AccountService : IAccountService
     {
         private readonly AppDbContext _context;
+        private readonly IMapper _mapper;
+        private readonly ILogger<AccountService> _logger;
 
-        public AccountService(AppDbContext context)
+        public AccountService(AppDbContext context, IMapper mapper, ILogger<AccountService> logger)
         {
             _context = context;
+            _mapper = mapper;
+            _logger = logger;
         }
 
         public async Task<IEnumerable<AccountResponseDto>> GetAllAccountsAsync()
         {
-            return await _context.Accounts
-                .Select(a => new AccountResponseDto(
-                    a.AccountId,
-                    a.AccountNumber,
-                    a.Balance,
-                    a.Status,
-                    a.OpenedDate,
-                    a.ClosedDate,
-                    a.UserId,
-                    a.BranchId,
-                    a.AccountTypeId
-                )).ToListAsync();
+            var accounts = await _context.Accounts.ToListAsync();
+            return _mapper.Map<IEnumerable<AccountResponseDto>>(accounts);
         }
 
         public async Task<AccountResponseDto?> GetAccountByIdAsync(long accountId)
         {
-            return await _context.Accounts
-                .Where(a => a.AccountId == accountId)
-                .Select(a => new AccountResponseDto(
-                    a.AccountId,
-                    a.AccountNumber,
-                    a.Balance,
-                    a.Status,
-                    a.OpenedDate,
-                    a.ClosedDate,
-                    a.UserId,
-                    a.BranchId,
-                    a.AccountTypeId
-                )).FirstOrDefaultAsync();
+            var account = await _context.Accounts.FindAsync(accountId);
+            return account is null ? null : _mapper.Map<AccountResponseDto>(account);
         }
 
         public async Task<AccountResponseDto> CreateAccountAsync(CreateAccountDto dto)
         {
-            var account = new Models.Account
-            {
-                UserId = dto.UserId,
-                BranchId = dto.BranchId,
-                AccountTypeId = dto.AccountTypeId,
-                Balance = dto.InitialDeposit,
-                Status = "Active",
-                OpenedDate = DateTime.UtcNow,
-                AccountNumber = await GenerateAccountNumber()
-            };
+            var account = _mapper.Map<Models.Account>(dto);
+            account.Status = "Active";
+            account.AccountNumber = await GenerateAccountNumber();
 
             _context.Accounts.Add(account);
             await _context.SaveChangesAsync();
 
-            return new AccountResponseDto(
-                account.AccountId,
-                account.AccountNumber,
-                account.Balance,
-                account.Status,
-                account.OpenedDate,
-                account.ClosedDate,
-                account.UserId,
-                account.BranchId,
-                account.AccountTypeId
-            );
+            _logger.LogInformation("Created account {AccountId} for user {UserId}", account.AccountId, account.UserId);
+            return _mapper.Map<AccountResponseDto>(account);
         }
 
         public async Task<bool> UpdateAccountStatusAsync(long accountId, UpdateAccountDto dto)

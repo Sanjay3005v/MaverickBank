@@ -1,5 +1,6 @@
 ﻿using MaverickBank.DTOs.Transaction;
 using MaverickBank.Services.Transaction;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,6 +8,7 @@ namespace MaverickBank.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class TransactionsController : ControllerBase
     {
         private readonly ITransactionService _transactionService;
@@ -17,6 +19,7 @@ namespace MaverickBank.Controllers
         }
 
         [HttpPost("deposit")]
+        [Authorize(Roles = "Customer,Employee")]
         public async Task<ActionResult<TransactionResponseDto>> Deposit(DepositDto dto)
         {
             var transaction = await _transactionService.DepositAsync(dto);
@@ -25,6 +28,7 @@ namespace MaverickBank.Controllers
         }
 
         [HttpPost("withdraw")]
+        [Authorize(Roles = "Customer,Employee")]
         public async Task<ActionResult<TransactionResponseDto>> Withdraw(WithdrawDto dto)
         {
             var transaction = await _transactionService.WithdrawAsync(dto);
@@ -32,7 +36,9 @@ namespace MaverickBank.Controllers
             return Ok(transaction);
         }
 
+
         [HttpPost("transfer")]
+        [Authorize(Roles = "Customer,Employee")]
         public async Task<ActionResult<TransactionResponseDto>> Transfer(TransferDto dto)
         {
             var transaction = await _transactionService.TransferAsync(dto);
