@@ -7,31 +7,30 @@ namespace MaverickBank.Services.AccountClosureRequest
     public class AccountClosureRequestService : IAccountClosureRequestService
     {
         private readonly AppDbContext _context;
+        private readonly ILogger<AccountClosureRequestService> _logger;
 
-        public AccountClosureRequestService(AppDbContext context)
+        public AccountClosureRequestService(AppDbContext context, ILogger<AccountClosureRequestService> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task<AccountClosureRequestResponseDto> CreateRequestAsync(CreateAccountClosureRequestDto dto)
         {
-            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.AccountId == dto.AccountId);
-
-            if (account is null)
-                throw new Exception("Account not found");
+            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.AccountId == dto.AccountId)
+                            ?? throw new KeyNotFoundException("Account not found.");
 
             if (account.UserId != dto.RequestedBy)
-                throw new Exception("You can only close your own account");
+                throw new InvalidOperationException("You can only close your own account.");
+
+            if (account.Status == "Closed")
+                throw new InvalidOperationException("Account is already closed.");
 
             if (account.Balance > 0)
-                throw new Exception("Account balance must be zero before closure");
+                throw new InvalidOperationException("Account balance must be zero before closure.");
 
-            var pendingRequest =
-                await _context.AccountClosureRequests
-                    .AnyAsync(r => r.AccountId == dto.AccountId && r.Status == "Pending");
-
-            if (pendingRequest)
-                throw new Exception("A pending closure request already exists");
+            if (await _context.AccountClosureRequests.AnyAsync(r => r.AccountId == dto.AccountId && r.Status == "Pending"))
+                throw new InvalidOperationException("A pending closure request already exists for this account.");
 
             var request = new Models.AccountClosureRequest
             {
@@ -44,6 +43,8 @@ namespace MaverickBank.Services.AccountClosureRequest
             _context.AccountClosureRequests.Add(request);
 
             await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Closure request {RequestId} created for account {AccountId}", request.RequestId, dto.AccountId);
 
             return new AccountClosureRequestResponseDto(
                 request.RequestId,
@@ -81,6 +82,9 @@ namespace MaverickBank.Services.AccountClosureRequest
             if (request is null)
                 return false;
 
+            if (request.Status != "Pending")
+                throw new InvalidOperationException("Only pending requests can be approved.");
+
             var account = await _context.Accounts.FirstOrDefaultAsync(a => a.AccountId == request.AccountId);
 
             if (account is null)
@@ -95,6 +99,8 @@ namespace MaverickBank.Services.AccountClosureRequest
             account.ClosedDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Closure request {RequestId} approved by {ReviewedBy}", requestId, reviewedBy);
 
             return true;
         }

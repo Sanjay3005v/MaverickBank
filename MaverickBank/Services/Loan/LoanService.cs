@@ -22,8 +22,19 @@ namespace MaverickBank.Services.Loan
 
         public async Task<LoanResponseDto> ApplyLoanAsync(ApplyLoanDto dto)
         {
-            var user = await _context.Users.FindAsync(dto.UserId)
-                ?? throw new KeyNotFoundException("User not found.");
+            if (!await _context.Users.AnyAsync(u => u.UserId == dto.UserId))
+                throw new KeyNotFoundException("User not found.");
+
+            var loanType = await _context.LoanTypes.FindAsync(dto.LoanTypeId)
+                ?? throw new KeyNotFoundException("Loan type not found.");
+
+            if (dto.RequestedAmount < loanType.MinimumAmount || dto.RequestedAmount > loanType.MaximumAmount)
+                throw new InvalidOperationException(
+                    $"Requested amount must be between {loanType.MinimumAmount} and {loanType.MaximumAmount}.");
+
+            if (dto.TenureMonths < loanType.MinimunTenureMonths || dto.TenureMonths > loanType.MaximumTenureMonths)
+                throw new InvalidOperationException(
+                    $"Tenure must be between {loanType.MinimunTenureMonths} and {loanType.MaximumTenureMonths} months.");
 
             var application = _mapper.Map<Models.LoanApplication>(dto);
             application.ApplicationStatus = "Pending";
@@ -78,14 +89,19 @@ namespace MaverickBank.Services.Loan
             if (application is null)
                 return false;
 
+            if (application.ApplicationStatus != "Pending")
+                throw new InvalidOperationException("Only pending applications can be approved.");
+
+            var account = await _context.Accounts
+                .FirstOrDefaultAsync(a => a.UserId == application.UserId)
+                ?? throw new KeyNotFoundException("User account not found.");
+
             application.ApplicationStatus = "Approved";
             application.ReviewedBy = dto.ReviewedBy;
             application.ReviewedDate = DateTime.UtcNow;
             application.Remarks = dto.Remarks;
 
-            var account = await _context.Accounts
-                .FirstOrDefaultAsync(a => a.UserId == application.UserId)
-                ?? throw new KeyNotFoundException("User account not found.");
+
 
             var loan = new Models.Loan
             {
@@ -119,17 +135,16 @@ namespace MaverickBank.Services.Loan
                 return false;
 
             if (dto.AmountPaid <= 0)
-                throw new Exception("Amount must be greater than zero");
+                throw new Exception("Amount must be greater than zero.");
 
             if (dto.AmountPaid > loan.OutstandingAmount)
-                throw new Exception("Amount exceeds outstanding balance");
+                throw new Exception("Amount exceeds outstanding balance.");
 
             loan.OutstandingAmount -= dto.AmountPaid;
 
             if (loan.OutstandingAmount == 0)
-            {
                 loan.LoanStatus = "Closed";
-            }
+
 
             var repayment = new Models.LoanRepayment
             {

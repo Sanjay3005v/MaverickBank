@@ -30,8 +30,7 @@ namespace MaverickBank.Services.Auth
             if (user is null || !user.IsActive)
                 throw new UnauthorizedAccessException("Invalid email or password.");
 
-            var isValid = BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash);
-            if (!isValid)
+            if (!BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
                 throw new UnauthorizedAccessException("Invalid email or password.");
 
             var role = await _context.Roles.FindAsync(user.RoleId);

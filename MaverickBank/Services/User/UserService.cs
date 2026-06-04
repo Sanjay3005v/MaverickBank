@@ -32,8 +32,7 @@ namespace MaverickBank.Services.User
             if (await _context.Users.AnyAsync(u => u.PANNumber == dto.PANNumber))
                 throw new InvalidOperationException("PAN number is already registered.");
 
-            var roleExists = await _context.Roles.AnyAsync(r => r.RoleId == dto.RoleId);
-            if (!roleExists)
+            if (!await _context.Roles.AnyAsync(r => r.RoleId == dto.RoleId))
                 throw new KeyNotFoundException("Role not found.");
 
             var user = _mapper.Map<Models.User>(dto);

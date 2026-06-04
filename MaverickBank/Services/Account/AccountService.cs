@@ -32,6 +32,18 @@ namespace MaverickBank.Services.Account
 
         public async Task<AccountResponseDto> CreateAccountAsync(CreateAccountDto dto)
         {
+            if (!await _context.Users.AnyAsync(u => u.UserId == dto.UserId))
+                throw new KeyNotFoundException($"User with ID {dto.UserId} not found.");
+
+            if (!await _context.Branches.AnyAsync(b => b.BranchId == dto.BranchId))
+                throw new KeyNotFoundException($"Branch with ID {dto.BranchId} not found.");
+
+            if (!await _context.AccountTypes.AnyAsync(t => t.AccountTypeId == dto.AccountTypeId))
+                throw new KeyNotFoundException($"Account type with ID {dto.AccountTypeId} not found.");
+
+            if (dto.InitialDeposit < 0)
+                throw new InvalidOperationException("Initial deposit cannot be negative.");
+
             var account = _mapper.Map<Models.Account>(dto);
             account.Status = "Active";
             account.AccountNumber = await GenerateAccountNumber();
@@ -55,6 +67,8 @@ namespace MaverickBank.Services.Account
 
             await _context.SaveChangesAsync();
 
+            _logger.LogInformation("Account {AccountId} status updated to {Status}", accountId, dto.Status);
+
             return true;
         }
 
@@ -65,10 +79,15 @@ namespace MaverickBank.Services.Account
             if (account is null)
                 return false;
 
+            if (account.Status == "Closed")
+                throw new InvalidOperationException("Account is already closed.");
+
             account.Status = "Closed";
             account.ClosedDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Account {AccountId} closed", accountId);
 
             return true;
         }

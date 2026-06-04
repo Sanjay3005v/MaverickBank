@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using MaverickBank.Data;
 using MaverickBank.DTOs.Beneficiary;
-using MaverickBank.Services.Account;
 using Microsoft.EntityFrameworkCore;
 
 namespace MaverickBank.Services.Beneficiary
@@ -21,6 +20,9 @@ namespace MaverickBank.Services.Beneficiary
 
         public async Task<BeneficiaryResponseDto> AddBeneficiaryAsync(AddBeneficiaryDto dto)
         {
+            if (!await _context.Users.AnyAsync(u => u.UserId == dto.UserId))
+                throw new KeyNotFoundException($"User with ID {dto.UserId} not found.");
+
             var userExists = await _context.Users.AnyAsync(u => u.UserId == dto.UserId);
 
             if (!userExists)
@@ -58,6 +60,8 @@ namespace MaverickBank.Services.Beneficiary
             _context.Beneficiaries.Remove(beneficiary);
 
             await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Deleted beneficiary {BeneficiaryId}", beneficiaryId);
 
             return true;
         }

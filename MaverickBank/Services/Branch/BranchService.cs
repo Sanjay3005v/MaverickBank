@@ -20,22 +20,19 @@ namespace MaverickBank.Services.Branch
 
         public async Task<IEnumerable<BranchResponseDto>> GetAllBranchesAsync()
         {
-            _logger.LogInformation("Fetching all branches");
             var branches = await _context.Branches.ToListAsync();
             return _mapper.Map<IEnumerable<BranchResponseDto>>(branches);
         }
 
         public async Task<BranchResponseDto?> GetBranchByIdAsync(int branchId)
         {
-            _logger.LogInformation("Fetching branch with ID {BranchId}", branchId);
             var branch = await _context.Branches.FindAsync(branchId);
             return branch is null ? null : _mapper.Map<BranchResponseDto>(branch);
         }
 
         public async Task<BranchResponseDto> CreateBranchAsync(CreateBranchDto dto)
         {
-            var exists = await _context.Branches.AnyAsync(b => b.IFSCCode == dto.IFSCCode);
-            if (exists)
+            if (await _context.Branches.AnyAsync(b => b.IFSCCode == dto.IFSCCode))
                 throw new InvalidOperationException($"A branch with IFSC code '{dto.IFSCCode}' already exists.");
 
             var branch = _mapper.Map<Models.Branch>(dto);
@@ -54,9 +51,7 @@ namespace MaverickBank.Services.Branch
             if (branch is null)
                 return false;
 
-            var ifscConflict = await _context.Branches
-                .AnyAsync(b => b.IFSCCode == dto.IFSCCode && b.BranchId != branchId);
-            if (ifscConflict)
+            if (await _context.Branches.AnyAsync(b => b.IFSCCode == dto.IFSCCode && b.BranchId != branchId))
                 throw new InvalidOperationException($"Another branch already uses IFSC code '{dto.IFSCCode}'.");
 
             _mapper.Map(dto, branch);

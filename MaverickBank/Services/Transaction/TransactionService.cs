@@ -20,8 +20,14 @@ namespace MaverickBank.Services.Transaction
 
         public async Task<TransactionResponseDto> DepositAsync(DepositDto dto)
         {
+            if (dto.Amount <= 0)
+                throw new InvalidOperationException("Deposit amount must be greater than zero.");
+
             var account = await _context.Accounts.FindAsync(dto.AccountId)
                 ?? throw new KeyNotFoundException("Account not found.");
+
+            if (account.Status != "Active")
+                throw new InvalidOperationException("Deposits can only be made to active accounts.");
 
             account.Balance += dto.Amount;
 
@@ -45,8 +51,14 @@ namespace MaverickBank.Services.Transaction
 
         public async Task<TransactionResponseDto> WithdrawAsync(WithdrawDto dto)
         {
+            if (dto.Amount <= 0)
+                throw new InvalidOperationException("Withdrawal amount must be greater than zero.");
+
             var account = await _context.Accounts.FindAsync(dto.AccountId)
                 ?? throw new KeyNotFoundException("Account not found.");
+
+            if (account.Status != "Active")
+                throw new InvalidOperationException("Withdrawals can only be made from active accounts.");
 
             if (account.Balance < dto.Amount)
                 throw new InvalidOperationException("Insufficient balance.");
@@ -73,11 +85,23 @@ namespace MaverickBank.Services.Transaction
 
         public async Task<TransactionResponseDto> TransferAsync(TransferDto dto)
         {
+            if (dto.Amount <= 0)
+                throw new InvalidOperationException("Transfer amount must be greater than zero.");
+
+            if (dto.FromAccountId == dto.ToAccountId)
+                throw new InvalidOperationException("Source and destination accounts must be different.");
+
             var fromAccount = await _context.Accounts.FindAsync(dto.FromAccountId)
                 ?? throw new KeyNotFoundException("Source account not found.");
 
             var toAccount = await _context.Accounts.FindAsync(dto.ToAccountId)
                 ?? throw new KeyNotFoundException("Destination account not found.");
+
+            if (fromAccount.Status != "Active")
+                throw new InvalidOperationException("Source account is not active.");
+
+            if (toAccount.Status != "Active")
+                throw new InvalidOperationException("Destination account is not active.");
 
             if (fromAccount.Balance < dto.Amount)
                 throw new Exception("Insufficient balance");
@@ -105,7 +129,7 @@ namespace MaverickBank.Services.Transaction
             return _mapper.Map<TransactionResponseDto>(transaction);
         }
 
-        public async Task<IEnumerable<TransactionResponseDto>> GetTransactionsByAccountIdAsync(long accountId,string? filter = null,DateTime? from = null,DateTime? to = null)
+        public async Task<IEnumerable<TransactionResponseDto>> GetTransactionsByAccountIdAsync(long accountId, string? filter = null, DateTime? from = null, DateTime? to = null)
         {
             var query = _context.Transactions
                 .Where(t => t.FromAccountId == accountId || t.ToAccountId == accountId)

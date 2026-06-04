@@ -32,9 +32,14 @@ namespace MaverickBank.Services.Loan
 
         public async Task<LoanTypeResponseDto> CreateLoanTypeAsync(CreateLoanTypeDto dto)
         {
-            var exists = await _context.LoanTypes.AnyAsync(l => l.LoanName == dto.LoanName);
-            if (exists)
+            if (await _context.LoanTypes.AnyAsync(l => l.LoanName == dto.LoanName))
                 throw new InvalidOperationException($"Loan type '{dto.LoanName}' already exists.");
+
+            if (dto.MinimumAmount >= dto.MaximumAmount)
+                throw new InvalidOperationException("Minimum amount must be less than maximum amount.");
+
+            if (dto.MinimumTenureMonths >= dto.MaximumTenureMonths)
+                throw new InvalidOperationException("Minimum tenure must be less than maximum tenure.");
 
             var loanType = _mapper.Map<Models.LoanType>(dto);
 
@@ -51,9 +56,7 @@ namespace MaverickBank.Services.Loan
             if (loanType is null)
                 return false;
 
-            var nameConflict = await _context.LoanTypes
-                .AnyAsync(l => l.LoanName == dto.LoanName && l.LoanTypeId != loanTypeId);
-            if (nameConflict)
+            if (await _context.LoanTypes.AnyAsync(l => l.LoanName == dto.LoanName && l.LoanTypeId != loanTypeId))
                 throw new InvalidOperationException($"Another loan type already uses the name '{dto.LoanName}'.");
 
             _mapper.Map(dto, loanType);
