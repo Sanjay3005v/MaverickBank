@@ -1,4 +1,5 @@
 ﻿using MaverickBank.DTOs.Loan;
+using MaverickBank.DTOs.Transaction;
 
 namespace MaverickBank.Services.Loan
 {
@@ -13,5 +14,9 @@ namespace MaverickBank.Services.Loan
         Task<bool> UpdateLoanStatusAsync(int loanId, ApproveLoanDto dto);
 
         Task<bool> RepayLoanAsync(LoanRepaymentDto dto);
+
+        Task<bool> RejectLoanAsync(int loanApplicationId, RejectLoanDto dto);
+
+        Task<IEnumerable<LoanResponseDto>> GetPendingLoanApplicationsAsync();
     }
 }

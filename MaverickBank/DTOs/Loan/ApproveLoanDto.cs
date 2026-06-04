@@ -4,6 +4,7 @@
         decimal ApprovedAmount,
         decimal InterestRate,
         int TenureMonths,
-        string Remarks
+        string Remarks,
+        int ReviewedBy
     );
 }

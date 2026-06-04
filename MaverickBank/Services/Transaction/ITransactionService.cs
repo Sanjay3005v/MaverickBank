@@ -10,6 +10,9 @@ namespace MaverickBank.Services.Transaction
 
         Task<TransactionResponseDto> TransferAsync(TransferDto dto);
 
-        Task<IEnumerable<TransactionResponseDto>> GetTransactionsByAccountIdAsync(long accountId);
+        Task<IEnumerable<TransactionResponseDto>> GetTransactionsByAccountIdAsync(long accountId,string? filter = null,DateTime? from = null,DateTime? to = null);
+
+        Task<TransactionSummaryDto> GetTransactionSummaryByAccountIdAsync(long accountId);
+
     }
 }

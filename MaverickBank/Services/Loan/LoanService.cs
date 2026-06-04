@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using MaverickBank.Data;
 using MaverickBank.DTOs.Loan;
+using MaverickBank.DTOs.Transaction;
 using MaverickBank.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -78,6 +79,9 @@ namespace MaverickBank.Services.Loan
                 return false;
 
             application.ApplicationStatus = "Approved";
+            application.ReviewedBy = dto.ReviewedBy;
+            application.ReviewedDate = DateTime.UtcNow;
+            application.Remarks = dto.Remarks;
 
             var account = await _context.Accounts
                 .FirstOrDefaultAsync(a => a.UserId == application.UserId)
@@ -141,6 +145,38 @@ namespace MaverickBank.Services.Loan
 
             _logger.LogInformation("Repayment of {Amount} made for loan {LoanId}", dto.AmountPaid, dto.LoanId);
             return true;
+        }
+
+        public async Task<bool> RejectLoanAsync(int loanApplicationId, RejectLoanDto dto)
+        {
+            var application = await _context.LoanApplications
+                .FirstOrDefaultAsync(l => l.LoanApplicationId == loanApplicationId);
+
+            if (application is null)
+                return false;
+
+            if (application.ApplicationStatus != "Pending")
+                throw new InvalidOperationException("Only pending applications can be rejected.");
+
+            application.ApplicationStatus = "Rejected";
+            application.ReviewedBy = dto.ReviewedBy;
+            application.ReviewedDate = DateTime.UtcNow;
+            application.Remarks = dto.Remarks;
+
+            await _context.SaveChangesAsync();
+
+            _logger.LogInformation("Loan application {AppId} rejected by {ReviewedBy}", loanApplicationId, dto.ReviewedBy);
+            return true;
+        }
+
+        public async Task<IEnumerable<LoanResponseDto>> GetPendingLoanApplicationsAsync()
+        {
+            var applications = await _context.LoanApplications
+                .Where(l => l.ApplicationStatus == "Pending")
+                .OrderBy(l => l.AppliedDate)
+                .ToListAsync();
+
+            return _mapper.Map<IEnumerable<LoanResponseDto>>(applications);
         }
     }
 }

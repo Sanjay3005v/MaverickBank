@@ -47,11 +47,21 @@ namespace MaverickBank.Controllers
         }
 
         [HttpGet("account/{accountId:long}")]
-        public async Task<ActionResult<IEnumerable<TransactionResponseDto>>> GetByAccountId(long accountId)
+        public async Task<ActionResult<IEnumerable<TransactionResponseDto>>> GetByAccountId(long accountId, [FromQuery] string? filter = null, [FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null)
         {
-            var transactions = await _transactionService.GetTransactionsByAccountIdAsync(accountId);
+            if (filter == "daterange" && (!from.HasValue || !to.HasValue))
+                return BadRequest(new { message = "Both 'from' and 'to' dates are required for date range filter." });
 
+            var transactions = await _transactionService.GetTransactionsByAccountIdAsync(accountId, filter, from, to);
             return Ok(transactions);
+        }
+
+        [HttpGet("account/{accountId:long}/summary")]
+        [Authorize(Roles = "Employee,Admin")]
+        public async Task<ActionResult<TransactionSummaryDto>> GetTransactionSummary(long accountId)
+        {
+            var summary = await _transactionService.GetTransactionSummaryByAccountIdAsync(accountId);
+            return Ok(summary);
         }
     }
 }

@@ -105,19 +105,54 @@ namespace MaverickBank.Services.Transaction
             return _mapper.Map<TransactionResponseDto>(transaction);
         }
 
-        public async Task<IEnumerable<TransactionResponseDto>> GetTransactionsByAccountIdAsync(long accountId)
+        public async Task<IEnumerable<TransactionResponseDto>> GetTransactionsByAccountIdAsync(long accountId,string? filter = null,DateTime? from = null,DateTime? to = null)
         {
-            var transactions = await _context.Transactions
-               .Where(t => t.FromAccountId == accountId || t.ToAccountId == accountId)
-               .OrderByDescending(t => t.TransactionDate)
-               .ToListAsync();
+            var query = _context.Transactions
+                .Where(t => t.FromAccountId == accountId || t.ToAccountId == accountId)
+                .OrderByDescending(t => t.TransactionDate)
+                .AsQueryable();
 
+            if (filter == "last10")
+            {
+                query = query.Take(10);
+            }
+            else if (filter == "lastmonth")
+            {
+                var start = DateTime.UtcNow.AddMonths(-1);
+                query = query.Where(t => t.TransactionDate >= start);
+            }
+            else if (filter == "daterange" && from.HasValue && to.HasValue)
+            {
+                query = query.Where(t => t.TransactionDate >= from.Value && t.TransactionDate <= to.Value);
+            }
+
+            var transactions = await query.ToListAsync();
             return _mapper.Map<IEnumerable<TransactionResponseDto>>(transactions);
         }
 
         private string GenerateTransactionReference()
         {
             return $"TXN{DateTime.UtcNow.Ticks}";
+        }
+
+        public async Task<TransactionSummaryDto> GetTransactionSummaryByAccountIdAsync(long accountId)
+        {
+            var transactions = await _context.Transactions
+                .Where(t => t.FromAccountId == accountId || t.ToAccountId == accountId)
+                .ToListAsync();
+
+            var totalInbound = transactions
+                .Where(t => t.ToAccountId == accountId)
+                .Sum(t => t.Amount);
+
+            var totalOutbound = transactions
+                .Where(t => t.FromAccountId == accountId)
+                .Sum(t => t.Amount);
+
+            var inboundCount = transactions.Count(t => t.ToAccountId == accountId);
+            var outboundCount = transactions.Count(t => t.FromAccountId == accountId);
+
+            return new TransactionSummaryDto(accountId, totalInbound, totalOutbound, inboundCount, outboundCount);
         }
     }
 }
