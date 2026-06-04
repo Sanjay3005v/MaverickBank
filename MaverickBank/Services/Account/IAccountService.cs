@@ -14,5 +14,6 @@ namespace MaverickBank.Services.Account
         Task<bool> UpdateAccountStatusAsync(long accountId,UpdateAccountDto dto);
 
         Task<bool> CloseAccountAsync(long accountId,CloseAccountDto dto);
+        Task<IEnumerable<AccountResponseDto>> GetAccountsByUserIdAsync(int userId);
     }
 }

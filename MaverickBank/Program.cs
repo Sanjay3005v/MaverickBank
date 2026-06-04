@@ -2,16 +2,17 @@ using MaverickBank.Data;
 using MaverickBank.MappingProfile;
 using MaverickBank.Services.Account;
 using MaverickBank.Services.AccountClosureRequest;
+using MaverickBank.Services.Auth;
 using MaverickBank.Services.Beneficiary;
 using MaverickBank.Services.Branch;
 using MaverickBank.Services.Loan;
 using MaverickBank.Services.Transaction;
-using MaverickBank.Services.Auth;
+using MaverickBank.Services.User;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using Microsoft.OpenApi;
+using System.Text;
 
 
 
@@ -25,6 +26,7 @@ namespace MaverickBank
 
             builder.Services.AddDbContext<AppDbContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
             builder.Services.AddAutoMapper(typeof(AutoMapperProfile));
             builder.Services.AddScoped<IAccountService, AccountService>();
             builder.Services.AddScoped<ITransactionService, TransactionService>();
@@ -34,6 +36,8 @@ namespace MaverickBank
             builder.Services.AddScoped<IBranchService, BranchService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+            builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<ILoanTypeService, LoanTypeService>();
 
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"]!;
@@ -46,7 +50,8 @@ namespace MaverickBank
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
             .AddJwtBearer(options =>
-            {options.TokenValidationParameters = new TokenValidationParameters
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
                     ValidateAudience = true,
@@ -66,7 +71,7 @@ namespace MaverickBank
 
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-            
+
 
             var app = builder.Build();
 

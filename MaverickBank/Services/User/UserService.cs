@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MaverickBank.Services.User
 {
-    public class UserService
+    public class UserService : IUserService
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;

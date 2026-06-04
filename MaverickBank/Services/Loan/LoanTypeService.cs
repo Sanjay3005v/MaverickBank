@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MaverickBank.Services.Loan
 {
-    public class LoanTypeService
+    public class LoanTypeService : ILoanTypeService
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;

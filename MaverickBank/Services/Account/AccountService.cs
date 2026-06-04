@@ -35,6 +35,7 @@ namespace MaverickBank.Services.Account
             var account = _mapper.Map<Models.Account>(dto);
             account.Status = "Active";
             account.AccountNumber = await GenerateAccountNumber();
+            account.OpenedDate = DateTime.UtcNow;
 
             _context.Accounts.Add(account);
             await _context.SaveChangesAsync();
@@ -83,6 +84,14 @@ namespace MaverickBank.Services.Account
             } while (await _context.Accounts.AnyAsync(a => a.AccountNumber == accountNumber));
 
             return accountNumber;
+        }
+        public async Task<IEnumerable<AccountResponseDto>> GetAccountsByUserIdAsync(int userId)
+        {
+            var accounts = await _context.Accounts
+                .Where(a => a.UserId == userId)
+                .ToListAsync();
+
+            return _mapper.Map<IEnumerable<AccountResponseDto>>(accounts);
         }
     }
 }

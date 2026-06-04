@@ -68,5 +68,13 @@ namespace MaverickBank.Controllers
 
             return NoContent();
         }
+
+        [HttpGet("user/{userId:int}")]
+        [Authorize]
+        public async Task<ActionResult<IEnumerable<AccountResponseDto>>> GetAccountsByUserId(int userId)
+        {
+            var accounts = await _accountService.GetAccountsByUserIdAsync(userId);
+            return Ok(accounts);
+        }
     }
 }
