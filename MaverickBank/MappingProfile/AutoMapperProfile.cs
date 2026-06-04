@@ -71,6 +71,11 @@ namespace MaverickBank.MappingProfile
                 .ForMember(dest => dest.ReviewedBy, opt => opt.Ignore())
                 .ForMember(dest => dest.ReviewedDate, opt => opt.Ignore())
                 .ForMember(dest => dest.Remarks, opt => opt.Ignore());
+
+            CreateMap<Models.LoanType, LoanTypeResponseDto>();
+            CreateMap<CreateLoanTypeDto, Models.LoanType>()
+                .ForMember(dest => dest.LoanTypeId, opt => opt.Ignore())
+                .ForMember(dest => dest.MinimunTenureMonths, opt => opt.MapFrom(src => src.MinimumTenureMonths));
         }
     }
 }

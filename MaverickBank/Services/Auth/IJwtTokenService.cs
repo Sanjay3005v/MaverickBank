@@ -4,6 +4,6 @@ namespace MaverickBank.Services.Auth
 {
     public interface IJwtTokenService
     {
-        string GenerateToken(User user, string roleName);
+        string GenerateToken(Models.User user, string roleName);
     }
 }

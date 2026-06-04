@@ -15,7 +15,7 @@ namespace MaverickBank.Services.Auth
             _config = config;
         }
 
-        public string GenerateToken(User user, string roleName)
+        public string GenerateToken(Models.User user, string roleName)
         {
             var jwtSettings = _config.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"]!;

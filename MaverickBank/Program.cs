@@ -32,6 +32,8 @@ namespace MaverickBank
             builder.Services.AddScoped<ILoanService, LoanService>();
             builder.Services.AddScoped<IAccountClosureRequestService, AccountClosureRequestService>();
             builder.Services.AddScoped<IBranchService, BranchService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"]!;
