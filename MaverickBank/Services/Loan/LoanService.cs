@@ -1,8 +1,8 @@
 ﻿using AutoMapper;
 using MaverickBank.Data;
 using MaverickBank.DTOs.Loan;
+using MaverickBank.DTOs.Pagination;
 using MaverickBank.DTOs.Transaction;
-using MaverickBank.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace MaverickBank.Services.Loan
@@ -48,9 +48,20 @@ namespace MaverickBank.Services.Loan
             return _mapper.Map<LoanResponseDto>(application);
         }
 
-        public async Task<IEnumerable<LoanResponseDto>> GetLoansByUserIdAsync(int userId)
+        public async Task<PagedResultDto<LoanResponseDto>> GetLoansByUserIdAsync(int userId, int pageNumber, int pageSize)
         {
-            var loans = await _context.Loans
+            pageNumber = pageNumber <= 0 ? 1 : pageNumber;
+            pageSize = pageSize <= 0 ? 10 : pageSize;
+
+            var totalCount = await _context.Loans
+                .Join(
+                    _context.LoanApplications,
+                    loan => loan.LoanApplicationId,
+                    app => app.LoanApplicationId,
+                    (loan, app) => new { loan, app })
+                .Where(x => x.app.UserId == userId)
+                .Select(x => x.loan).CountAsync();
+            var items = await _context.Loans
                 .Join(
                     _context.LoanApplications,
                     loan => loan.LoanApplicationId,
@@ -58,9 +69,14 @@ namespace MaverickBank.Services.Loan
                     (loan, app) => new { loan, app })
                 .Where(x => x.app.UserId == userId)
                 .Select(x => x.loan)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            return _mapper.Map<IEnumerable<LoanResponseDto>>(loans);
+            var data = _mapper.Map<IEnumerable<LoanResponseDto>>(items);
+            return new PagedResultDto<LoanResponseDto>(
+                data, pageNumber, pageSize, totalCount,
+                (int)Math.Ceiling(totalCount / (double)pageSize));
         }
 
         public async Task<LoanResponseDto?> GetLoanByIdAsync(int loanId)
@@ -184,14 +200,26 @@ namespace MaverickBank.Services.Loan
             return true;
         }
 
-        public async Task<IEnumerable<LoanResponseDto>> GetPendingLoanApplicationsAsync()
+        public async Task<PagedResultDto<LoanResponseDto>> GetPendingLoanApplicationsAsync(int pageNumber, int pageSize)
         {
-            var applications = await _context.LoanApplications
+            pageNumber = pageNumber <= 0 ? 1 : pageNumber;
+            pageSize = pageSize <= 0 ? 10 : pageSize;
+
+            var query = _context.LoanApplications
                 .Where(l => l.ApplicationStatus == "Pending")
-                .OrderBy(l => l.AppliedDate)
+                .OrderBy(l => l.AppliedDate);
+
+            var totalCount = await query.CountAsync();
+
+            var applications = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            return _mapper.Map<IEnumerable<LoanResponseDto>>(applications);
+            var data = _mapper.Map<IEnumerable<LoanResponseDto>>(applications);
+            return new PagedResultDto<LoanResponseDto>(
+                data, pageNumber, pageSize, totalCount,
+                (int)Math.Ceiling(totalCount / (double)pageSize));
         }
     }
 }

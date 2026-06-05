@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using MaverickBank.Data;
 using MaverickBank.DTOs.Beneficiary;
+using MaverickBank.DTOs.Pagination;
 using Microsoft.EntityFrameworkCore;
 
 namespace MaverickBank.Services.Beneficiary
@@ -39,16 +40,22 @@ namespace MaverickBank.Services.Beneficiary
             return _mapper.Map<BeneficiaryResponseDto>(beneficiary);
         }
 
-        public async Task<IEnumerable<BeneficiaryResponseDto>> GetBeneficiariesByUserIdAsync(long userId)
+        public async Task<PagedResultDto<BeneficiaryResponseDto>> GetBeneficiariesByUserIdAsync(long userId, int pageNumber, int pageSize)
         {
-            var beneficiaries = await _context.Beneficiaries
-                .Where(b => b.UserId == userId)
-                .OrderByDescending(b => b.CreatedAt)
+            pageNumber = pageNumber <= 0 ? 1 : pageNumber;
+            pageSize = pageSize <= 0 ? 10 : pageSize;
+
+            var totalCount = await _context.Beneficiaries.CountAsync();
+            var items = await _context.Beneficiaries
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            return _mapper.Map<IEnumerable<BeneficiaryResponseDto>>(beneficiaries);
+            var data = _mapper.Map<IEnumerable<BeneficiaryResponseDto>>(items);
+            return new PagedResultDto<BeneficiaryResponseDto>(
+                data, pageNumber, pageSize, totalCount,
+                (int)Math.Ceiling(totalCount / (double)pageSize));
         }
-
         public async Task<bool> DeleteBeneficiaryAsync(long beneficiaryId)
         {
             var beneficiary = await _context.Beneficiaries

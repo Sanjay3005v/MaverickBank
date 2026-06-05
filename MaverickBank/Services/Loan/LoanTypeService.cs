@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using MaverickBank.Data;
 using MaverickBank.DTOs.Loan;
+using MaverickBank.DTOs.Pagination;
 using Microsoft.EntityFrameworkCore;
 
 namespace MaverickBank.Services.Loan
@@ -18,12 +19,22 @@ namespace MaverickBank.Services.Loan
             _logger = logger;
         }
 
-        public async Task<IEnumerable<LoanTypeResponseDto>> GetAllLoanTypesAsync()
+        public async Task<PagedResultDto<LoanTypeResponseDto>> GetAllLoanTypesAsync(int pageNumber, int pageSize)
         {
-            var loanTypes = await _context.LoanTypes.ToListAsync();
-            return _mapper.Map<IEnumerable<LoanTypeResponseDto>>(loanTypes);
-        }
+            pageNumber = pageNumber <= 0 ? 1 : pageNumber;
+            pageSize = pageSize <= 0 ? 10 : pageSize;
 
+            var totalCount = await _context.LoanTypes.CountAsync();
+            var items = await _context.LoanTypes
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var data = _mapper.Map<IEnumerable<LoanTypeResponseDto>>(items);
+            return new PagedResultDto<LoanTypeResponseDto>(
+                data, pageNumber, pageSize, totalCount,
+                (int)Math.Ceiling(totalCount / (double)pageSize));
+        }
         public async Task<LoanTypeResponseDto?> GetLoanTypeByIdAsync(int loanTypeId)
         {
             var loanType = await _context.LoanTypes.FindAsync(loanTypeId);

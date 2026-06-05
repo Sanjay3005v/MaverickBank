@@ -1,12 +1,14 @@
-﻿using MaverickBank.DTOs.Auth;
+﻿using Asp.Versioning;
+using MaverickBank.DTOs.Auth;
 using MaverickBank.Services.Auth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MaverickBank.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
+    [ApiVersion("1.0")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;

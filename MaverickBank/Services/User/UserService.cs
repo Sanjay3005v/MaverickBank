@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using MaverickBank.Data;
+using MaverickBank.DTOs.Pagination;
 using MaverickBank.DTOs.User;
 using Microsoft.EntityFrameworkCore;
 
@@ -54,10 +55,21 @@ namespace MaverickBank.Services.User
             return user is null ? null : _mapper.Map<UserResponseDto>(user);
         }
 
-        public async Task<IEnumerable<UserResponseDto>> GetAllUsersAsync()
+        public async Task<PagedResultDto<UserResponseDto>> GetAllUsersAsync(int pageNumber, int pageSize)
         {
-            var users = await _context.Users.ToListAsync();
-            return _mapper.Map<IEnumerable<UserResponseDto>>(users);
+            pageNumber = pageNumber <= 0 ? 1 : pageNumber;
+            pageSize = pageSize <= 0 ? 10 : pageSize;
+
+            var totalCount = await _context.Users.CountAsync();
+            var users = await _context.Users
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var data = _mapper.Map<IEnumerable<UserResponseDto>>(users);
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            return new PagedResultDto<UserResponseDto>(data, pageNumber, pageSize, totalCount, totalPages);
         }
 
         public async Task<bool> UpdateUserAsync(int userId, UpdateUserDto dto)

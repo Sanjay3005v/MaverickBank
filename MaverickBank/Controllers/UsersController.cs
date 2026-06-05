@@ -1,4 +1,5 @@
-﻿using MaverickBank.DTOs.User;
+﻿using Asp.Versioning;
+using MaverickBank.DTOs.User;
 using MaverickBank.Services.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -6,8 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MaverickBank.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
+    [ApiVersion("1.0")]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -37,9 +39,9 @@ namespace MaverickBank.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin,Employee")]
-        public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetAllUsers()
+        public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetAllUsers([FromQuery] int pageNumber = 1,[FromQuery] int pageSize = 10)
         {
-            var users = await _userService.GetAllUsersAsync();
+            var users = await _userService.GetAllUsersAsync(pageNumber, pageSize);
             return Ok(users);
         }
 

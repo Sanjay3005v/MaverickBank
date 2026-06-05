@@ -1,12 +1,14 @@
-﻿using MaverickBank.DTOs.Account;
+﻿using Asp.Versioning;
+using MaverickBank.DTOs.Account;
 using MaverickBank.Services.Account;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MaverickBank.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
+    [ApiVersion("1.0")]
     public class AccountsController : ControllerBase
     {
         private readonly IAccountService _accountService;
@@ -18,9 +20,9 @@ namespace MaverickBank.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Employee,Admin")]
-        public async Task<ActionResult<IEnumerable<AccountResponseDto>>> GetAllAccounts()
+        public async Task<ActionResult<IEnumerable<AccountResponseDto>>> GetAllAccounts([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var accounts = await _accountService.GetAllAccountsAsync();
+            var accounts = await _accountService.GetAllAccountsAsync(pageNumber, pageSize);
             return Ok(accounts);
         }
 
@@ -71,9 +73,9 @@ namespace MaverickBank.Controllers
 
         [HttpGet("user/{userId:int}")]
         [Authorize]
-        public async Task<ActionResult<IEnumerable<AccountResponseDto>>> GetAccountsByUserId(int userId)
+        public async Task<ActionResult<IEnumerable<AccountResponseDto>>> GetAccountsByUserId(int userId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var accounts = await _accountService.GetAccountsByUserIdAsync(userId);
+            var accounts = await _accountService.GetAccountsByUserIdAsync(userId, pageNumber, pageSize);
             return Ok(accounts);
         }
     }

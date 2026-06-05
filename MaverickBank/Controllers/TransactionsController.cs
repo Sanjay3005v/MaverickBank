@@ -1,4 +1,6 @@
-﻿using MaverickBank.DTOs.Transaction;
+﻿using Asp.Versioning;
+using MaverickBank.DTOs.Pagination;
+using MaverickBank.DTOs.Transaction;
 using MaverickBank.Services.Transaction;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -6,8 +8,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MaverickBank.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
+    [ApiVersion("1.0")]
     [Authorize]
     public class TransactionsController : ControllerBase
     {
@@ -47,12 +50,19 @@ namespace MaverickBank.Controllers
         }
 
         [HttpGet("account/{accountId:long}")]
-        public async Task<ActionResult<IEnumerable<TransactionResponseDto>>> GetByAccountId(long accountId, [FromQuery] string? filter = null, [FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null)
+        public async Task<ActionResult<PagedResultDto<TransactionResponseDto>>> GetByAccountId(
+            long accountId,
+            [FromQuery] string? filter = null,
+            [FromQuery] DateTime? from = null,
+            [FromQuery] DateTime? to = null,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
         {
             if (filter == "daterange" && (!from.HasValue || !to.HasValue))
                 return BadRequest(new { message = "Both 'from' and 'to' dates are required for date range filter." });
 
-            var transactions = await _transactionService.GetTransactionsByAccountIdAsync(accountId, filter, from, to);
+            var transactions = await _transactionService.GetTransactionsByAccountIdAsync(
+                accountId, filter, from, to, pageNumber, pageSize);
             return Ok(transactions);
         }
 

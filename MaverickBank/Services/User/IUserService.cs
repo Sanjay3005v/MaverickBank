@@ -1,4 +1,5 @@
-﻿using MaverickBank.DTOs.User;
+﻿using MaverickBank.DTOs.Pagination;
+using MaverickBank.DTOs.User;
 
 namespace MaverickBank.Services.User
 {
@@ -6,7 +7,7 @@ namespace MaverickBank.Services.User
     {
         Task<UserResponseDto> RegisterAsync(CreateUserDto dto);
         Task<UserResponseDto?> GetUserByIdAsync(int userId);
-        Task<IEnumerable<UserResponseDto>> GetAllUsersAsync();
+        Task<PagedResultDto<UserResponseDto>> GetAllUsersAsync(int pageNumber, int pageSize);
         Task<bool> UpdateUserAsync(int userId, UpdateUserDto dto);
         Task<bool> SetUserActiveStatusAsync(int userId, bool isActive);
     }

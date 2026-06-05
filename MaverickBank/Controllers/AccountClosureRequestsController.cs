@@ -1,12 +1,15 @@
-﻿using MaverickBank.DTOs.AccountClosureRequest;
+﻿using Asp.Versioning;
+using MaverickBank.DTOs.AccountClosureRequest;
+using MaverickBank.DTOs.Pagination;
 using MaverickBank.Services.AccountClosureRequest;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MaverickBank.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
+    [ApiVersion("1.0")]
     public class AccountClosureRequestsController : ControllerBase
     {
         private readonly IAccountClosureRequestService _service;
@@ -25,10 +28,9 @@ namespace MaverickBank.Controllers
         }
 
         [HttpGet("pending")]
-        public async Task<ActionResult<IEnumerable<AccountClosureRequestResponseDto>>> GetPendingRequests()
+        public async Task<ActionResult<PagedResultDto<AccountClosureRequestResponseDto>>> GetPendingRequests([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var requests = await _service.GetPendingRequestsAsync();
-
+            var requests = await _service.GetPendingRequestsAsync(pageNumber, pageSize);
             return Ok(requests);
         }
 

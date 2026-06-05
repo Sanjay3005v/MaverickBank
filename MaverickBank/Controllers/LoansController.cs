@@ -1,12 +1,16 @@
-﻿using MaverickBank.DTOs.Loan;
+﻿using Asp.Versioning;
+using MaverickBank.DTOs.Loan;
+using MaverickBank.DTOs.Pagination;
+using MaverickBank.DTOs.Transaction;
 using MaverickBank.Services.Loan;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MaverickBank.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
+    [ApiVersion("1.0")]
     [Authorize]
     public class LoansController : ControllerBase
     {
@@ -28,9 +32,9 @@ namespace MaverickBank.Controllers
 
         [HttpGet("user/{userId:int}")]
         [Authorize(Roles = "Customer,Employee,Admin")]
-        public async Task<ActionResult<IEnumerable<LoanResponseDto>>> GetLoansByUserId(int userId)
+        public async Task<ActionResult<IEnumerable<LoanResponseDto>>> GetLoansByUserId(int userId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var loans = await _loanService.GetLoansByUserIdAsync(userId);
+            var loans = await _loanService.GetLoansByUserIdAsync(userId, pageNumber, pageSize);
 
             return Ok(loans);
         }
@@ -67,6 +71,28 @@ namespace MaverickBank.Controllers
                 return NotFound(new { message = "Loan not found." });
 
             return NoContent();
+        }
+
+        [HttpPut("{loanApplicationId:int}/reject")]
+        [Authorize(Roles = "Employee,Admin")]
+        public async Task<IActionResult> RejectLoan(int loanApplicationId, RejectLoanDto dto)
+        {
+            var rejected = await _loanService.RejectLoanAsync(loanApplicationId, dto);
+
+            if (!rejected)
+                return NotFound(new { message = $"Loan application with ID {loanApplicationId} not found." });
+
+            return NoContent();
+        }
+
+        [HttpGet("pending")]
+        [Authorize(Roles = "Employee,Admin")]
+        public async Task<ActionResult<PagedResultDto<LoanResponseDto>>> GetPendingLoanApplications(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10)
+        {
+            var loans = await _loanService.GetPendingLoanApplicationsAsync(pageNumber, pageSize);
+            return Ok(loans);
         }
     }
 }

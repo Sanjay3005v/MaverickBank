@@ -1,4 +1,5 @@
-﻿using MaverickBank.DTOs.Branch;
+﻿using Asp.Versioning;
+using MaverickBank.DTOs.Branch;
 using MaverickBank.Services.Branch;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -6,8 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MaverickBank.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
+    [ApiVersion("1.0")]
     public class BranchesController : ControllerBase
     {
         private readonly IBranchService _branchService;
@@ -19,9 +21,9 @@ namespace MaverickBank.Controllers
 
         [HttpGet]
         [Authorize]
-        public async Task<ActionResult<IEnumerable<BranchResponseDto>>> GetAllBranches()
+        public async Task<ActionResult<IEnumerable<BranchResponseDto>>> GetAllBranches([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var branches = await _branchService.GetAllBranchesAsync();
+            var branches = await _branchService.GetAllBranchesAsync(pageNumber, pageSize);
             return Ok(branches);
         }
 

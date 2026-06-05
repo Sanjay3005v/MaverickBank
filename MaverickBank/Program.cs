@@ -1,3 +1,4 @@
+using Asp.Versioning;
 using MaverickBank.Data;
 using MaverickBank.MappingProfile;
 using MaverickBank.Services.Account;
@@ -11,7 +12,6 @@ using MaverickBank.Services.User;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
 using System.Text;
 
@@ -67,6 +67,7 @@ namespace MaverickBank
 
             builder.Services.AddSwaggerGen(c =>
             {
+                c.SwaggerDoc("v1", new() { Title = "MaverickBank API", Version = "v1" });
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     In = ParameterLocation.Header,
@@ -90,6 +91,19 @@ namespace MaverickBank
                     }
                 });
             });
+
+            builder.Services.AddApiVersioning(options =>
+            {
+                options.DefaultApiVersion = new ApiVersion(1, 0);
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.ReportApiVersions = true;
+                options.ApiVersionReader = new UrlSegmentApiVersionReader();
+            })
+            .AddApiExplorer(options =>
+            {
+                options.GroupNameFormat = "'v'VVV";
+                options.SubstituteApiVersionInUrl = true;
+            });
             // Add services to the container.
 
             builder.Services.AddControllers();
@@ -102,7 +116,10 @@ namespace MaverickBank
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/json", "MaverickBank API v1");
+                });
             }
 
 

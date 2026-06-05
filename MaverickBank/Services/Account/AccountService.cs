@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using MaverickBank.Data;
 using MaverickBank.DTOs.Account;
+using MaverickBank.DTOs.Pagination;
 using Microsoft.EntityFrameworkCore;
 
 namespace MaverickBank.Services.Account
@@ -18,10 +19,21 @@ namespace MaverickBank.Services.Account
             _logger = logger;
         }
 
-        public async Task<IEnumerable<AccountResponseDto>> GetAllAccountsAsync()
+        public async Task<PagedResultDto<AccountResponseDto>> GetAllAccountsAsync(int pageNumber, int pageSize)
         {
-            var accounts = await _context.Accounts.ToListAsync();
-            return _mapper.Map<IEnumerable<AccountResponseDto>>(accounts);
+            pageNumber = pageNumber <= 0 ? 1 : pageNumber;
+            pageSize = pageSize <= 0 ? 10 : pageSize;
+
+            var totalCount = await _context.Accounts.CountAsync();
+            var items = await _context.Accounts
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var data = _mapper.Map<IEnumerable<AccountResponseDto>>(items);
+            return new PagedResultDto<AccountResponseDto>(
+                data, pageNumber, pageSize, totalCount,
+                (int)Math.Ceiling(totalCount / (double)pageSize));
         }
 
         public async Task<AccountResponseDto?> GetAccountByIdAsync(long accountId)
@@ -104,13 +116,24 @@ namespace MaverickBank.Services.Account
 
             return accountNumber;
         }
-        public async Task<IEnumerable<AccountResponseDto>> GetAccountsByUserIdAsync(int userId)
+
+        public async Task<PagedResultDto<AccountResponseDto>> GetAccountsByUserIdAsync(int userId, int pageNumber, int pageSize)
         {
-            var accounts = await _context.Accounts
+            pageNumber = pageNumber <= 0 ? 1 : pageNumber;
+            pageSize = pageSize <= 0 ? 10 : pageSize;
+
+            var totalCount = await _context.Accounts
+                .Where(a => a.UserId == userId).CountAsync();
+            var items = await _context.Accounts
                 .Where(a => a.UserId == userId)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
-            return _mapper.Map<IEnumerable<AccountResponseDto>>(accounts);
+            var data = _mapper.Map<IEnumerable<AccountResponseDto>>(items);
+            return new PagedResultDto<AccountResponseDto>(
+                data, pageNumber, pageSize, totalCount,
+                (int)Math.Ceiling(totalCount / (double)pageSize));
         }
     }
 }

@@ -1,5 +1,7 @@
-﻿using MaverickBank.Data;
+﻿using AutoMapper;
+using MaverickBank.Data;
 using MaverickBank.DTOs.AccountClosureRequest;
+using MaverickBank.DTOs.Pagination;
 using Microsoft.EntityFrameworkCore;
 
 namespace MaverickBank.Services.AccountClosureRequest
@@ -58,23 +60,35 @@ namespace MaverickBank.Services.AccountClosureRequest
             );
         }
 
-        public async Task<IEnumerable<AccountClosureRequestResponseDto>> GetPendingRequestsAsync()
+        public async Task<PagedResultDto<AccountClosureRequestResponseDto>> GetPendingRequestsAsync(int pageNumber, int pageSize)
         {
-            return await _context.AccountClosureRequests
-                .Where(r => r.Status == "Pending")
-                .OrderBy(r => r.RequestDate)
-                .Select(r => new AccountClosureRequestResponseDto(
-                        r.RequestId,
-                        r.AccountId,
-                        r.RequestedBy,
-                        r.RequestDate,
-                        r.Status,
-                        r.ReviewedBy,
-                        r.ReviewedDate,
-                        r.Remarks
-                )).ToListAsync();
-        }
+            pageNumber = pageNumber <= 0 ? 1 : pageNumber;
+            pageSize = pageSize <= 0 ? 10 : pageSize;
 
+            var query = _context.AccountClosureRequests
+                .Where(r => r.Status == "Pending")
+                .OrderBy(r => r.RequestDate);
+
+            var totalCount = await query.CountAsync();
+
+            var items = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(r => new AccountClosureRequestResponseDto(
+                    r.RequestId,
+                    r.AccountId,
+                    r.RequestedBy,
+                    r.RequestDate,
+                    r.Status,
+                    r.ReviewedBy,
+                    r.ReviewedDate,
+                    r.Remarks
+                )).ToListAsync();
+
+            return new PagedResultDto<AccountClosureRequestResponseDto>(
+                items, pageNumber, pageSize, totalCount,
+                (int)Math.Ceiling(totalCount / (double)pageSize));
+        }
         public async Task<bool> ApproveRequestAsync(long requestId, int reviewedBy, string remarks)
         {
             var request = await _context.AccountClosureRequests.FirstOrDefaultAsync(r => r.RequestId == requestId);

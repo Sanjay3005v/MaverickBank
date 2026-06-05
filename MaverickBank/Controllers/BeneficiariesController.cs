@@ -1,4 +1,5 @@
-﻿using MaverickBank.DTOs.Beneficiary;
+﻿using Asp.Versioning;
+using MaverickBank.DTOs.Beneficiary;
 using MaverickBank.Services.Beneficiary;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -6,8 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace MaverickBank.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
+    [ApiVersion("1.0")]
     [Authorize(Roles = "Customer")]
     public class BeneficiariesController : ControllerBase
     {
@@ -27,9 +29,9 @@ namespace MaverickBank.Controllers
         }
 
         [HttpGet("user/{userId:int}")]
-        public async Task<ActionResult<IEnumerable<BeneficiaryResponseDto>>> GetByUserId(int userId)
+        public async Task<ActionResult<IEnumerable<BeneficiaryResponseDto>>> GetByUserId(int userId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
-            var beneficiaries = await _beneficiaryService.GetBeneficiariesByUserIdAsync(userId);
+            var beneficiaries = await _beneficiaryService.GetBeneficiariesByUserIdAsync(userId, pageNumber, pageSize);
 
             return Ok(beneficiaries);
         }

@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using MaverickBank.Data;
 using MaverickBank.DTOs.Branch;
+using MaverickBank.DTOs.Pagination;
 using Microsoft.EntityFrameworkCore;
 
 namespace MaverickBank.Services.Branch
@@ -18,10 +19,21 @@ namespace MaverickBank.Services.Branch
             _logger = logger;
         }
 
-        public async Task<IEnumerable<BranchResponseDto>> GetAllBranchesAsync()
+        public async Task<PagedResultDto<BranchResponseDto>> GetAllBranchesAsync(int pageNumber, int pageSize)
         {
-            var branches = await _context.Branches.ToListAsync();
-            return _mapper.Map<IEnumerable<BranchResponseDto>>(branches);
+            pageNumber = pageNumber <= 0 ? 1 : pageNumber;
+            pageSize = pageSize <= 0 ? 10 : pageSize;
+
+            var totalCount = await _context.Branches.CountAsync();
+            var items = await _context.Branches
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var data = _mapper.Map<IEnumerable<BranchResponseDto>>(items);
+            return new PagedResultDto<BranchResponseDto>(
+                data, pageNumber, pageSize, totalCount,
+                (int)Math.Ceiling(totalCount / (double)pageSize));
         }
 
         public async Task<BranchResponseDto?> GetBranchByIdAsync(int branchId)

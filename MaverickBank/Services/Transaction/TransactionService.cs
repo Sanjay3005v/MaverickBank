@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using MaverickBank.Data;
+using MaverickBank.DTOs.Pagination;
 using MaverickBank.DTOs.Transaction;
 using Microsoft.EntityFrameworkCore;
 
@@ -129,8 +130,11 @@ namespace MaverickBank.Services.Transaction
             return _mapper.Map<TransactionResponseDto>(transaction);
         }
 
-        public async Task<IEnumerable<TransactionResponseDto>> GetTransactionsByAccountIdAsync(long accountId, string? filter = null, DateTime? from = null, DateTime? to = null)
+        public async Task<PagedResultDto<TransactionResponseDto>> GetTransactionsByAccountIdAsync(long accountId, string? filter = null, DateTime? from = null, DateTime? to = null, int pageNumber = 1, int pageSize = 10)
         {
+            pageNumber = pageNumber <= 0 ? 1 : pageNumber;
+            pageSize = pageSize <= 0 ? 10 : pageSize;
+
             var query = _context.Transactions
                 .Where(t => t.FromAccountId == accountId || t.ToAccountId == accountId)
                 .OrderByDescending(t => t.TransactionDate)
@@ -138,9 +142,12 @@ namespace MaverickBank.Services.Transaction
 
             if (filter == "last10")
             {
-                query = query.Take(10);
+                var last10 = await query.Take(10).ToListAsync();
+                var last10Data = _mapper.Map<IEnumerable<TransactionResponseDto>>(last10);
+                return new PagedResultDto<TransactionResponseDto>(last10Data, 1, 10, last10.Count, 1);
             }
-            else if (filter == "lastmonth")
+
+            if (filter == "lastmonth")
             {
                 var start = DateTime.UtcNow.AddMonths(-1);
                 query = query.Where(t => t.TransactionDate >= start);
@@ -150,8 +157,16 @@ namespace MaverickBank.Services.Transaction
                 query = query.Where(t => t.TransactionDate >= from.Value && t.TransactionDate <= to.Value);
             }
 
-            var transactions = await query.ToListAsync();
-            return _mapper.Map<IEnumerable<TransactionResponseDto>>(transactions);
+            var totalCount = await query.CountAsync();
+            var transactions = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var data = _mapper.Map<IEnumerable<TransactionResponseDto>>(transactions);
+            return new PagedResultDto<TransactionResponseDto>(
+                data, pageNumber, pageSize, totalCount,
+                (int)Math.Ceiling(totalCount / (double)pageSize));
         }
 
         private string GenerateTransactionReference()
