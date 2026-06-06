@@ -3,6 +3,8 @@ using MaverickBank.DTOs.Account;
 using MaverickBank.Services.Account;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Identity.Client;
+using System.Security.Claims;
 
 namespace MaverickBank.Controllers
 {
@@ -51,7 +53,8 @@ namespace MaverickBank.Controllers
         [Authorize(Roles = "Employee,Admin")]
         public async Task<IActionResult> UpdateAccountStatus(long id, UpdateAccountDto dto)
         {
-            var updated = await _accountService.UpdateAccountStatusAsync(id, dto);
+            var performedByUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var updated = await _accountService.UpdateAccountStatusAsync(id, dto, performedByUserId);
 
             if (!updated)
                 return NotFound(new { message = $"Account with ID {id} not found." });
@@ -63,7 +66,8 @@ namespace MaverickBank.Controllers
         [Authorize(Roles = "Employee,Admin")]
         public async Task<IActionResult> CloseAccount(long id, CloseAccountDto dto)
         {
-            var closed = await _accountService.CloseAccountAsync(id, dto);
+            var performedByUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var closed = await _accountService.CloseAccountAsync(id, dto, performedByUserId);
 
             if (!closed)
                 return NotFound(new { message = $"Account with ID {id} not found." });

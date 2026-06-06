@@ -3,7 +3,10 @@ using MaverickBank.Data;
 using MaverickBank.DTOs.Loan;
 using MaverickBank.DTOs.Pagination;
 using MaverickBank.DTOs.Transaction;
+using MaverickBank.Models;
+using MaverickBank.Services.AuditLog;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace MaverickBank.Services.Loan
 {
@@ -11,12 +14,14 @@ namespace MaverickBank.Services.Loan
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
         private readonly ILogger<LoanService> _logger;
 
-        public LoanService(AppDbContext context, IMapper mapper, ILogger<LoanService> logger)
+        public LoanService(AppDbContext context, IMapper mapper, IAuditLogService auditLogService, ILogger<LoanService> logger)
         {
             _context = context;
             _mapper = mapper;
+            _auditLogService = auditLogService;
             _logger = logger;
         }
 
@@ -43,6 +48,10 @@ namespace MaverickBank.Services.Loan
             _context.LoanApplications.Add(application);
 
             await _context.SaveChangesAsync();
+
+            var resultDto = _mapper.Map<LoanResponseDto>(application);
+
+            await _auditLogService.LogAsync(dto.UserId, "Loan Application Submitted", "LoanApplication", application.LoanApplicationId, newValues: JsonSerializer.Serialize(resultDto));
 
             _logger.LogInformation("Loan application {AppId} submitted by user {UserId}", application.LoanApplicationId, dto.UserId);
             return _mapper.Map<LoanResponseDto>(application);
@@ -109,8 +118,7 @@ namespace MaverickBank.Services.Loan
                 throw new InvalidOperationException("Only pending applications can be approved.");
 
             var account = await _context.Accounts
-                .FirstOrDefaultAsync(a => a.UserId == application.UserId)
-                ?? throw new KeyNotFoundException("User account not found.");
+                .FirstOrDefaultAsync(a => a.UserId == application.UserId) ?? throw new KeyNotFoundException("User account not found.");
 
             application.ApplicationStatus = "Approved";
             application.ReviewedBy = dto.ReviewedBy;
@@ -138,6 +146,7 @@ namespace MaverickBank.Services.Loan
             _context.Loans.Add(loan);
 
             await _context.SaveChangesAsync();
+            await _auditLogService.LogAsync(dto.ReviewedBy, "Loan Approved", "Loan", loan.LoanId);
 
             _logger.LogInformation("Loan approved for application {AppId}", loanApplicationId);
             return true;
@@ -174,6 +183,9 @@ namespace MaverickBank.Services.Loan
             _context.LoanRepayments.Add(repayment);
             await _context.SaveChangesAsync();
 
+            var account = await _context.Accounts.FindAsync(loan.AccountId);
+
+            await _auditLogService.LogAsync(account!.UserId, "Loan Repayment Made", "Loan", dto.LoanId, newValues: $"Amount: {dto.AmountPaid}"); _logger.LogInformation("Repayment of {Amount} made for loan {LoanId}", dto.AmountPaid, dto.LoanId);
             _logger.LogInformation("Repayment of {Amount} made for loan {LoanId}", dto.AmountPaid, dto.LoanId);
             return true;
         }
@@ -195,6 +207,8 @@ namespace MaverickBank.Services.Loan
             application.Remarks = dto.Remarks;
 
             await _context.SaveChangesAsync();
+
+            await _auditLogService.LogAsync(dto.ReviewedBy, "Loan Rejected", "Loan", loanApplicationId);
 
             _logger.LogInformation("Loan application {AppId} rejected by {ReviewedBy}", loanApplicationId, dto.ReviewedBy);
             return true;

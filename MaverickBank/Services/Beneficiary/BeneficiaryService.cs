@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using MaverickBank.Data;
 using MaverickBank.DTOs.Beneficiary;
+using MaverickBank.DTOs.Branch;
 using MaverickBank.DTOs.Pagination;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,8 +46,9 @@ namespace MaverickBank.Services.Beneficiary
             pageNumber = pageNumber <= 0 ? 1 : pageNumber;
             pageSize = pageSize <= 0 ? 10 : pageSize;
 
-            var totalCount = await _context.Beneficiaries.CountAsync();
+            var totalCount = await _context.Beneficiaries.Where(b => b.UserId == userId).CountAsync();
             var items = await _context.Beneficiaries
+                .Where(b => b.UserId == userId)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
@@ -71,6 +73,15 @@ namespace MaverickBank.Services.Beneficiary
             _logger.LogInformation("Deleted beneficiary {BeneficiaryId}", beneficiaryId);
 
             return true;
+        }
+        public async Task<IEnumerable<BranchResponseDto>> SearchBranchesByNameAsync(string bankName)
+        {
+            var branches = await _context.Branches
+                .Where(b => b.BranchName.Contains(bankName))
+                .OrderBy(b => b.BranchName)
+                .ToListAsync();
+
+            return _mapper.Map<IEnumerable<BranchResponseDto>>(branches);
         }
     }
 }

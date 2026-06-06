@@ -10,5 +10,6 @@ namespace MaverickBank.Services.Branch
         Task<BranchResponseDto> CreateBranchAsync(CreateBranchDto dto);
         Task<bool> UpdateBranchAsync(int branchId, CreateBranchDto dto);
         Task<bool> DeleteBranchAsync(int branchId);
+        Task<IEnumerable<BranchResponseDto>> SearchBranchesByNameAsync(string bankName);
     }
 }

@@ -12,9 +12,9 @@ namespace MaverickBank.Services.Account
 
         Task<AccountResponseDto> CreateAccountAsync(CreateAccountDto dto);
 
-        Task<bool> UpdateAccountStatusAsync(long accountId, UpdateAccountDto dto);
+        Task<bool> UpdateAccountStatusAsync(long accountId, UpdateAccountDto dto, int performedByUserId);
 
-        Task<bool> CloseAccountAsync(long accountId, CloseAccountDto dto);
+        Task<bool> CloseAccountAsync(long accountId, CloseAccountDto dto, int performedByUserId);
 
         Task<PagedResultDto<AccountResponseDto>> GetAccountsByUserIdAsync(int userId, int pageNumber, int pageSize);
 

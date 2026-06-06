@@ -67,5 +67,16 @@ namespace MaverickBank.Controllers
 
             return NoContent();
         }
+
+        [HttpGet("search")]
+        [Authorize(Roles = "Customer")]
+        public async Task<ActionResult<IEnumerable<BranchResponseDto>>> SearchBranches([FromQuery] string bankName)
+        {
+            if (string.IsNullOrWhiteSpace(bankName))
+                return BadRequest(new { message = "bankName query parameter is required." });
+
+            var branches = await _branchService.SearchBranchesByNameAsync(bankName);
+            return Ok(branches);
+        }
     }
 }

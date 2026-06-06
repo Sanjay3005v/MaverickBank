@@ -2,7 +2,10 @@
 using MaverickBank.Data;
 using MaverickBank.DTOs.Pagination;
 using MaverickBank.DTOs.User;
+using MaverickBank.Services.AuditLog;
 using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
+using System.Text.Json;
 
 namespace MaverickBank.Services.User
 {
@@ -10,12 +13,14 @@ namespace MaverickBank.Services.User
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
         private readonly ILogger<UserService> _logger;
 
-        public UserService(AppDbContext context, IMapper mapper, ILogger<UserService> logger)
+        public UserService(AppDbContext context, IMapper mapper, IAuditLogService auditLogService, ILogger<UserService> logger)
         {
             _context = context;
             _mapper = mapper;
+            _auditLogService = auditLogService;
             _logger = logger;
         }
 
@@ -44,6 +49,8 @@ namespace MaverickBank.Services.User
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
+
+            await _auditLogService.LogAsync(user.UserId, "User Registered", "User", user.UserId, newValues: JsonSerializer.Serialize(dto));
 
             _logger.LogInformation("User {UserId} registered with role {RoleId}", user.UserId, user.RoleId);
             return _mapper.Map<UserResponseDto>(user);
@@ -81,11 +88,16 @@ namespace MaverickBank.Services.User
             if (await _context.Users.AnyAsync(u => u.PhoneNumber == dto.PhoneNumber && u.UserId != userId))
                 throw new InvalidOperationException("Phone number is already in use.");
 
+            var oldValues = JsonSerializer.Serialize(_mapper.Map<UpdateUserDto>(user));
+
             _mapper.Map(dto, user);
             user.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
+            await _auditLogService.LogAsync(userId, "User Updated", "User", userId,
+                oldValues: oldValues,
+                newValues: JsonSerializer.Serialize(dto));
             _logger.LogInformation("User {UserId} updated", userId);
             return true;
         }
@@ -100,7 +112,7 @@ namespace MaverickBank.Services.User
             user.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
-
+            await _auditLogService.LogAsync(userId, $"User {(isActive ? "Activated" : "Deactivated")}", "User", userId);
             _logger.LogInformation("User {UserId} active status set to {IsActive}", userId, isActive);
             return true;
         }

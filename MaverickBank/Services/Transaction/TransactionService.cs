@@ -2,7 +2,10 @@
 using MaverickBank.Data;
 using MaverickBank.DTOs.Pagination;
 using MaverickBank.DTOs.Transaction;
+using MaverickBank.Models;
+using MaverickBank.Services.AuditLog;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace MaverickBank.Services.Transaction
 {
@@ -10,12 +13,14 @@ namespace MaverickBank.Services.Transaction
     {
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
+        private readonly IAuditLogService _auditLogService;
         private readonly ILogger<TransactionService> _logger;
 
-        public TransactionService(AppDbContext context, IMapper mapper, ILogger<TransactionService> logger)
+        public TransactionService(AppDbContext context, IMapper mapper, IAuditLogService auditLogService, ILogger<TransactionService> logger)
         {
             _context = context;
             _mapper = mapper;
+            _auditLogService = auditLogService;
             _logger = logger;
         }
 
@@ -46,8 +51,13 @@ namespace MaverickBank.Services.Transaction
             _context.Transactions.Add(transaction);
             await _context.SaveChangesAsync();
 
+            var resultDto = _mapper.Map<TransactionResponseDto>(transaction);
+
+            await _auditLogService.LogAsync(account.UserId, "Deposit", "Transaction", transaction.TransactionId, newValues: JsonSerializer.Serialize(resultDto));
+
             _logger.LogInformation("Deposit of {Amount} to account {AccountId}", dto.Amount, dto.AccountId);
-            return _mapper.Map<TransactionResponseDto>(transaction);
+
+            return resultDto;
         }
 
         public async Task<TransactionResponseDto> WithdrawAsync(WithdrawDto dto)
@@ -79,9 +89,12 @@ namespace MaverickBank.Services.Transaction
 
             _context.Transactions.Add(transaction);
             await _context.SaveChangesAsync();
+            var resultDto = _mapper.Map<TransactionResponseDto>(transaction);
+
+            await _auditLogService.LogAsync(account.UserId, "Withdrawal", "Transaction", transaction.TransactionId, newValues: JsonSerializer.Serialize(resultDto));
 
             _logger.LogInformation("Withdrawal of {Amount} from account {AccountId}", dto.Amount, dto.AccountId);
-            return _mapper.Map<TransactionResponseDto>(transaction);
+            return resultDto;
         }
 
         public async Task<TransactionResponseDto> TransferAsync(TransferDto dto)
@@ -125,9 +138,12 @@ namespace MaverickBank.Services.Transaction
             _context.Transactions.Add(transaction);
 
             await _context.SaveChangesAsync();
+            var resultDto = _mapper.Map<TransactionResponseDto>(transaction);
+
+            await _auditLogService.LogAsync(fromAccount.UserId, "Transfer", "Transaction", transaction.TransactionId, newValues: JsonSerializer.Serialize(resultDto));
 
             _logger.LogInformation("Transfer of {Amount} from {From} to {To}", dto.Amount, dto.FromAccountId, dto.ToAccountId);
-            return _mapper.Map<TransactionResponseDto>(transaction);
+            return resultDto;
         }
 
         public async Task<PagedResultDto<TransactionResponseDto>> GetTransactionsByAccountIdAsync(long accountId, string? filter = null, DateTime? from = null, DateTime? to = null, int pageNumber = 1, int pageSize = 10)

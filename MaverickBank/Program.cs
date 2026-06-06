@@ -1,8 +1,10 @@
 using Asp.Versioning;
 using MaverickBank.Data;
 using MaverickBank.MappingProfile;
+using MaverickBank.Middleware;
 using MaverickBank.Services.Account;
 using MaverickBank.Services.AccountClosureRequest;
+using MaverickBank.Services.AuditLog;
 using MaverickBank.Services.Auth;
 using MaverickBank.Services.Beneficiary;
 using MaverickBank.Services.Branch;
@@ -39,6 +41,10 @@ namespace MaverickBank
             builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ILoanTypeService, LoanTypeService>();
+            builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+            builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+            builder.Services.AddProblemDetails();
+
 
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"]!;
@@ -118,13 +124,14 @@ namespace MaverickBank
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
                 {
-                    c.SwaggerEndpoint("/swagger/v1/json", "MaverickBank API v1");
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "MaverickBank API v1");
                 });
             }
 
-
+            app.UseExceptionHandler();
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
 

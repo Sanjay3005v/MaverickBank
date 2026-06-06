@@ -85,5 +85,14 @@ namespace MaverickBank.Services.Branch
             _logger.LogInformation("Deleted branch with ID {BranchId}", branchId);
             return true;
         }
+        public async Task<IEnumerable<BranchResponseDto>> SearchBranchesByNameAsync(string bankName)
+        {
+            var branches = await _context.Branches
+                .Where(b => b.BranchName.Contains(bankName))
+                .OrderBy(b => b.BranchName)
+                .ToListAsync();
+
+            return _mapper.Map<IEnumerable<BranchResponseDto>>(branches);
+        }
     }
 }

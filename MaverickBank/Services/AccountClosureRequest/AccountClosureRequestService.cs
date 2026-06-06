@@ -2,6 +2,7 @@
 using MaverickBank.Data;
 using MaverickBank.DTOs.AccountClosureRequest;
 using MaverickBank.DTOs.Pagination;
+using MaverickBank.Services.AuditLog;
 using Microsoft.EntityFrameworkCore;
 
 namespace MaverickBank.Services.AccountClosureRequest
@@ -9,11 +10,13 @@ namespace MaverickBank.Services.AccountClosureRequest
     public class AccountClosureRequestService : IAccountClosureRequestService
     {
         private readonly AppDbContext _context;
+        private readonly IAuditLogService _auditLogService;
         private readonly ILogger<AccountClosureRequestService> _logger;
 
-        public AccountClosureRequestService(AppDbContext context, ILogger<AccountClosureRequestService> logger)
+        public AccountClosureRequestService(AppDbContext context, IAuditLogService auditLogService, ILogger<AccountClosureRequestService> logger)
         {
             _context = context;
+            _auditLogService = auditLogService;
             _logger = logger;
         }
 
@@ -46,8 +49,8 @@ namespace MaverickBank.Services.AccountClosureRequest
 
             await _context.SaveChangesAsync();
 
+            await _auditLogService.LogAsync(dto.RequestedBy, "Account Closure Requested", "AccountClosure", request.RequestId);
             _logger.LogInformation("Closure request {RequestId} created for account {AccountId}", request.RequestId, dto.AccountId);
-
             return new AccountClosureRequestResponseDto(
                 request.RequestId,
                 request.AccountId,
@@ -113,11 +116,10 @@ namespace MaverickBank.Services.AccountClosureRequest
             account.ClosedDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
-
+            await _auditLogService.LogAsync(reviewedBy, "Account Closure Approved", "AccountClosure", requestId);
             _logger.LogInformation("Closure request {RequestId} approved by {ReviewedBy}", requestId, reviewedBy);
 
             return true;
         }
-
     }
 }

@@ -2,7 +2,10 @@
 using MaverickBank.Data;
 using MaverickBank.DTOs.Account;
 using MaverickBank.DTOs.Pagination;
+using MaverickBank.Services.AuditLog;
 using Microsoft.EntityFrameworkCore;
+using System.Net.NetworkInformation;
+using System.Text.Json;
 
 namespace MaverickBank.Services.Account
 {
@@ -11,11 +14,14 @@ namespace MaverickBank.Services.Account
         private readonly AppDbContext _context;
         private readonly IMapper _mapper;
         private readonly ILogger<AccountService> _logger;
+        private readonly IAuditLogService _auditLogService;
 
-        public AccountService(AppDbContext context, IMapper mapper, ILogger<AccountService> logger)
+
+        public AccountService(AppDbContext context, IMapper mapper, IAuditLogService auditLogService, ILogger<AccountService> logger)
         {
             _context = context;
             _mapper = mapper;
+            _auditLogService = auditLogService;
             _logger = logger;
         }
 
@@ -63,12 +69,12 @@ namespace MaverickBank.Services.Account
 
             _context.Accounts.Add(account);
             await _context.SaveChangesAsync();
-
+            await _auditLogService.LogAsync(dto.UserId, "Account Created", "Account", account.AccountId, newValues: JsonSerializer.Serialize(account));
             _logger.LogInformation("Created account {AccountId} for user {UserId}", account.AccountId, account.UserId);
             return _mapper.Map<AccountResponseDto>(account);
         }
 
-        public async Task<bool> UpdateAccountStatusAsync(long accountId, UpdateAccountDto dto)
+        public async Task<bool> UpdateAccountStatusAsync(long accountId, UpdateAccountDto dto, int performedByUserId)
         {
             var account = await _context.Accounts.FindAsync(accountId);
 
@@ -79,12 +85,15 @@ namespace MaverickBank.Services.Account
 
             await _context.SaveChangesAsync();
 
+            await _auditLogService.LogAsync(performedByUserId, $"Account Status Changed to {dto.Status}",
+                "Account", accountId);
+
             _logger.LogInformation("Account {AccountId} status updated to {Status}", accountId, dto.Status);
 
             return true;
         }
 
-        public async Task<bool> CloseAccountAsync(long accountId, CloseAccountDto dto)
+        public async Task<bool> CloseAccountAsync(long accountId, CloseAccountDto dto, int performedByUserId)
         {
             var account = await _context.Accounts.FindAsync(accountId);
 
@@ -98,7 +107,7 @@ namespace MaverickBank.Services.Account
             account.ClosedDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
-
+            await _auditLogService.LogAsync(performedByUserId, "Account Closed", "Account", accountId);
             _logger.LogInformation("Account {AccountId} closed", accountId);
 
             return true;
