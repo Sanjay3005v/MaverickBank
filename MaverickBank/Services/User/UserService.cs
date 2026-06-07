@@ -43,7 +43,7 @@ namespace MaverickBank.Services.User
 
             var user = _mapper.Map<Models.User>(dto);
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
-            user.IsActive = true;
+            user.IsActive = false;
             user.CreatedAt = DateTime.UtcNow;
             user.UpdatedAt = DateTime.UtcNow;
 

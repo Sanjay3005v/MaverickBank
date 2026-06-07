@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 
 
@@ -49,7 +50,7 @@ namespace MaverickBank
             var jwtSettings = builder.Configuration.GetSection("JwtSettings");
             var secretKey = jwtSettings["SecretKey"]!;
 
-
+            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -76,10 +77,12 @@ namespace MaverickBank
                 c.SwaggerDoc("v1", new() { Title = "MaverickBank API", Version = "v1" });
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
-                    In = ParameterLocation.Header,
-                    Description = "Enter JWT with Bearer prefix. Example: \"Bearer {token}\"",
                     Name = "Authorization",
-                    Type = SecuritySchemeType.ApiKey
+                    Type = SecuritySchemeType.Http,  
+                    Scheme = "bearer",               
+                    BearerFormat = "JWT",            
+                    In = ParameterLocation.Header,
+                    Description = "Enter your JWT token (without Bearer prefix)"
                 });
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement()
                 {
