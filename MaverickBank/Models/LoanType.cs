@@ -25,7 +25,7 @@ namespace MaverickBank.Models
         public decimal MaximumAmount { get; set; }
 
         [Required]
-        public int MinimunTenureMonths { get; set; }
+        public int MinimumTenureMonths { get; set; }
 
         [Required]
         public int MaximumTenureMonths { get; set; }

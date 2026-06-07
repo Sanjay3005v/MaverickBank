@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using MaverickBank.DTOs.Account;
+using MaverickBank.DTOs.AuditLog;
 using MaverickBank.DTOs.Beneficiary;
 using MaverickBank.DTOs.Branch;
 using MaverickBank.DTOs.Loan;
@@ -18,9 +19,10 @@ namespace MaverickBank.MappingProfile
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore());
 
             CreateMap<Models.User, UserResponseDto>();
+            CreateMap<Models.User, UpdateUserDto>();
             CreateMap<CreateUserDto, Models.User>()
                 .ForMember(dest => dest.UserId, opt => opt.Ignore())
-                .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())   
+                .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
                 .ForMember(dest => dest.IsActive, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
@@ -40,7 +42,7 @@ namespace MaverickBank.MappingProfile
             CreateMap<Models.Account, AccountResponseDto>();
             CreateMap<CreateAccountDto, Models.Account>()
                 .ForMember(dest => dest.AccountId, opt => opt.Ignore())
-                .ForMember(dest => dest.AccountNumber, opt => opt.Ignore())  
+                .ForMember(dest => dest.AccountNumber, opt => opt.Ignore())
                 .ForMember(dest => dest.Balance, opt => opt.MapFrom(src => src.InitialDeposit))
                 .ForMember(dest => dest.Status, opt => opt.Ignore())
                 .ForMember(dest => dest.OpenedDate, opt => opt.Ignore())
@@ -75,7 +77,9 @@ namespace MaverickBank.MappingProfile
             CreateMap<Models.LoanType, LoanTypeResponseDto>();
             CreateMap<CreateLoanTypeDto, Models.LoanType>()
                 .ForMember(dest => dest.LoanTypeId, opt => opt.Ignore())
-                .ForMember(dest => dest.MinimunTenureMonths, opt => opt.MapFrom(src => src.MinimumTenureMonths));
+                .ForMember(dest => dest.MinimumTenureMonths, opt => opt.MapFrom(src => src.MinimumTenureMonths));
+
+            CreateMap<Models.AuditLog, AuditLogResponseDto>();
         }
     }
 }

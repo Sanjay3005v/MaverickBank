@@ -69,7 +69,7 @@ namespace MaverickBank.Controllers
         }
 
         [HttpGet("search")]
-        [Authorize(Roles = "Customer")]
+        [Authorize(Roles = "Customer,Admin")]
         public async Task<ActionResult<IEnumerable<BranchResponseDto>>> SearchBranches([FromQuery] string bankName)
         {
             if (string.IsNullOrWhiteSpace(bankName))

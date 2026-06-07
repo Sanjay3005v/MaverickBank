@@ -37,9 +37,9 @@ namespace MaverickBank.Services.Loan
                 throw new InvalidOperationException(
                     $"Requested amount must be between {loanType.MinimumAmount} and {loanType.MaximumAmount}.");
 
-            if (dto.TenureMonths < loanType.MinimunTenureMonths || dto.TenureMonths > loanType.MaximumTenureMonths)
+            if (dto.TenureMonths < loanType.MinimumTenureMonths || dto.TenureMonths > loanType.MaximumTenureMonths)
                 throw new InvalidOperationException(
-                    $"Tenure must be between {loanType.MinimunTenureMonths} and {loanType.MaximumTenureMonths} months.");
+                    $"Tenure must be between {loanType.MinimumTenureMonths} and {loanType.MaximumTenureMonths} months.");
 
             var application = _mapper.Map<Models.LoanApplication>(dto);
             application.ApplicationStatus = "Pending";

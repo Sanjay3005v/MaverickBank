@@ -78,11 +78,11 @@ namespace MaverickBank
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
                     Name = "Authorization",
-                    Type = SecuritySchemeType.Http,  
-                    Scheme = "bearer",               
-                    BearerFormat = "JWT",            
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
                     In = ParameterLocation.Header,
-                    Description = "Enter your JWT token (without Bearer prefix)"
+                    Description = "Enter your JWT token "
                 });
                 c.AddSecurityRequirement(new OpenApiSecurityRequirement()
                 {

@@ -10,7 +10,7 @@ namespace MaverickBank.Controllers
     [Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
     [ApiVersion("1.0")]
-    [Authorize(Roles = "Customer")]
+    [Authorize(Roles = "Customer,Admin,Employee")]
     public class BeneficiariesController : ControllerBase
     {
         private readonly IBeneficiaryService _beneficiaryService;
