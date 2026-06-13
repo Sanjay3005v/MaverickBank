@@ -3,6 +3,7 @@ using MaverickBank.Services.AuditLog;
 using MaverickBank.Services.Transaction;
 using Microsoft.Extensions.Logging;
 using Moq;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -252,7 +253,7 @@ namespace MaverickBankTests
         }
 
 
-        private Models.Account MakeAccount(decimal balance = 10_000m, string status = "Active")
+        private MaverickBank.Models.Account MakeAccount(decimal balance = 10_000m, string status = "Active")
         {
             var role = TestHelpers.SeedRole(_ctx, "Customer");
             var user = TestHelpers.SeedUser(_ctx, role.RoleId, $"{Guid.NewGuid():N}@bank.com");

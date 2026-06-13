@@ -56,7 +56,7 @@ namespace MaverickBankTests
             var user = TestHelpers.SeedUser(_ctx, role.RoleId);
 
             for (int i = 0; i < 5; i++)
-                _ctx.Beneficiaries.Add(new Models.Beneficiary
+                _ctx.Beneficiaries.Add(new MaverickBank.Models.Beneficiary
                 {
                     UserId = user.UserId,
                     BeneficiaryName = $"Person{i}",
@@ -84,7 +84,7 @@ namespace MaverickBankTests
             var u1 = TestHelpers.SeedUser(_ctx, role.RoleId, "b1@bank.com");
             var u2 = TestHelpers.SeedUser(_ctx, role.RoleId, "b2@bank.com");
 
-            _ctx.Beneficiaries.Add(new Models.Beneficiary
+            _ctx.Beneficiaries.Add(new MaverickBank.Models.Beneficiary
             {
                 UserId = u1.UserId,
                 BeneficiaryName = "U1Ben",
@@ -94,7 +94,7 @@ namespace MaverickBankTests
                 IFSCCode = "SBIN0001234",
                 CreatedAt = DateTime.UtcNow
             });
-            _ctx.Beneficiaries.Add(new Models.Beneficiary
+            _ctx.Beneficiaries.Add(new MaverickBank.Models.Beneficiary
             {
                 UserId = u2.UserId,
                 BeneficiaryName = "U2Ben",
@@ -118,7 +118,7 @@ namespace MaverickBankTests
         {
             var role = TestHelpers.SeedRole(_ctx);
             var user = TestHelpers.SeedUser(_ctx, role.RoleId);
-            var b = new Models.Beneficiary
+            var b = new MaverickBank.Models.Beneficiary
             {
                 UserId = user.UserId,
                 BeneficiaryName = "Del Me",

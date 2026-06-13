@@ -55,17 +55,34 @@ namespace MaverickBank.MappingProfile
 
             CreateMap<Models.Transaction, TransactionResponseDto>();
 
-            CreateMap<Models.Loan, LoanResponseDto>();
+            CreateMap<Models.Loan, LoanResponseDto>()
+                .ConstructUsing(src => new LoanResponseDto(
+                    src.LoanId,
+                    src.LoanApplicationId,
+                    src.AccountId,
+                    src.ApprovedAmount,
+                    src.InterestRate,
+                    src.TenureMonths,
+                    src.EMIAmount,
+                    src.OutstandingAmount,
+                    src.StartDate,
+                    src.EndDate,
+                    src.LoanStatus
+                ));
             CreateMap<Models.LoanApplication, LoanResponseDto>()
-                .ForMember(dest => dest.LoanId, opt => opt.MapFrom(_ => 0L))
-                .ForMember(dest => dest.AccountId, opt => opt.MapFrom(_ => 0L))
-                .ForMember(dest => dest.ApprovedAmount, opt => opt.MapFrom(_ => 0m))
-                .ForMember(dest => dest.InterestRate, opt => opt.MapFrom(_ => 0m))
-                .ForMember(dest => dest.EMIAmount, opt => opt.MapFrom(_ => 0m))
-                .ForMember(dest => dest.OutstandingAmount, opt => opt.MapFrom(_ => 0m))
-                .ForMember(dest => dest.StartDate, opt => opt.MapFrom(_ => DateTime.MinValue))
-                .ForMember(dest => dest.EndDate, opt => opt.MapFrom(_ => DateTime.MinValue))
-                .ForMember(dest => dest.LoanStatus, opt => opt.MapFrom(src => src.ApplicationStatus));
+                .ConstructUsing(src => new LoanResponseDto(
+                    0L,
+                    src.LoanApplicationId,
+                    0L,
+                    0m,
+                    0m,
+                    0,
+                    0m,
+                    0m,
+                    DateTime.MinValue,
+                    DateTime.MinValue,
+                    src.ApplicationStatus
+                ));
             CreateMap<ApplyLoanDto, Models.LoanApplication>()
                 .ForMember(dest => dest.LoanApplicationId, opt => opt.Ignore())
                 .ForMember(dest => dest.ApplicationStatus, opt => opt.Ignore())

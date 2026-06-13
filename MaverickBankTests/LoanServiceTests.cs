@@ -246,7 +246,7 @@ namespace MaverickBankTests
         }
 
 
-        private (Models.User user, Models.LoanType lt) SeedUserAndLoanType(
+        private (MaverickBank.Models.User user, MaverickBank.Models.LoanType lt) SeedUserAndLoanType(
             decimal min = 10_000m, decimal max = 500_000m,
             int minTenure = 12, int maxTenure = 60)
         {
@@ -256,7 +256,7 @@ namespace MaverickBankTests
             return (user, lt);
         }
 
-        private (Models.User user, Models.Account account, Models.LoanApplication app)
+        private (MaverickBank.Models.User user, MaverickBank.Models.Account account, MaverickBank.Models.LoanApplication app)
             SeedApplication(string appStatus = "Pending")
         {
             var role = TestHelpers.SeedRole(_ctx, "Customer");
@@ -269,7 +269,7 @@ namespace MaverickBankTests
             return (user, acct, app);
         }
 
-        private Models.Loan SeedActiveLoan(decimal amount)
+        private MaverickBank.Models.Loan SeedActiveLoan(decimal amount)
         {
             var (_, account, app) = SeedApplication("Approved");
             return TestHelpers.SeedLoan(_ctx, app.LoanApplicationId, account.AccountId, amount);

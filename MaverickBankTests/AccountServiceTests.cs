@@ -196,7 +196,7 @@ namespace MaverickBankTests
         }
 
 
-        private (Models.User, Models.Branch, Models.AccountType) Seed(string suffix = "")
+        private (MaverickBank.Models.User, MaverickBank.Models.Branch, MaverickBank.Models.AccountType) Seed(string suffix = "")
         {
             var role = TestHelpers.SeedRole(_ctx, "Customer");
             var user = TestHelpers.SeedUser(_ctx, role.RoleId, $"acc{suffix}{Guid.NewGuid():N}@bank.com");

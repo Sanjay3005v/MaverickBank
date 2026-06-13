@@ -76,7 +76,7 @@ namespace MaverickBankTests
         public void CreateRequestAsync_DuplicatePendingRequest_ThrowsInvalidOperation()
         {
             var (user, account) = SeedUserAndAccount(balance: 0m);
-            _ctx.AccountClosureRequests.Add(new Models.AccountClosureRequest
+            _ctx.AccountClosureRequests.Add(new MaverickBank.Models.AccountClosureRequest
             {
                 AccountId = account.AccountId,
                 RequestedBy = user.UserId,
@@ -101,9 +101,9 @@ namespace MaverickBankTests
         public async Task GetPendingRequestsAsync_ReturnsOnlyPendingRequests()
         {
             var (user, acct) = SeedUserAndAccount(balance: 0m);
-            _ctx.AccountClosureRequests.Add(new Models.AccountClosureRequest
+            _ctx.AccountClosureRequests.Add(new MaverickBank.Models.AccountClosureRequest
             { AccountId = acct.AccountId, RequestedBy = user.UserId, RequestDate = DateTime.UtcNow, Status = "Pending" });
-            _ctx.AccountClosureRequests.Add(new Models.AccountClosureRequest
+            _ctx.AccountClosureRequests.Add(new MaverickBank.Models.AccountClosureRequest
             { AccountId = acct.AccountId, RequestedBy = user.UserId, RequestDate = DateTime.UtcNow, Status = "Approved" });
             _ctx.SaveChanges();
 
@@ -119,7 +119,7 @@ namespace MaverickBankTests
             for (int i = 0; i < 12; i++)
             {
                 var (user, acct) = SeedUserAndAccount(balance: 0m);
-                _ctx.AccountClosureRequests.Add(new Models.AccountClosureRequest
+                _ctx.AccountClosureRequests.Add(new MaverickBank.Models.AccountClosureRequest
                 { AccountId = acct.AccountId, RequestedBy = user.UserId, RequestDate = DateTime.UtcNow, Status = "Pending" });
             }
             _ctx.SaveChanges();
@@ -136,7 +136,7 @@ namespace MaverickBankTests
         public async Task ApproveRequestAsync_PendingRequest_ClosesAccountAndSetsApproved()
         {
             var (user, account) = SeedUserAndAccount(balance: 0m);
-            var req = new Models.AccountClosureRequest
+            var req = new MaverickBank.Models.AccountClosureRequest
             {
                 AccountId = account.AccountId,
                 RequestedBy = user.UserId,
@@ -164,7 +164,7 @@ namespace MaverickBankTests
         public void ApproveRequestAsync_AlreadyApproved_ThrowsInvalidOperation()
         {
             var (user, account) = SeedUserAndAccount(balance: 0m);
-            var req = new Models.AccountClosureRequest
+            var req = new MaverickBank.Models.AccountClosureRequest
             {
                 AccountId = account.AccountId,
                 RequestedBy = user.UserId,
@@ -179,7 +179,7 @@ namespace MaverickBankTests
         }
 
 
-        private (Models.User, Models.Account) SeedUserAndAccount(decimal balance, string status = "Active")
+        private (MaverickBank.Models.User, MaverickBank.Models.Account) SeedUserAndAccount(decimal balance, string status = "Active")
         {
             var role = TestHelpers.SeedRole(_ctx, "Customer");
             var user = TestHelpers.SeedUser(_ctx, role.RoleId, $"{Guid.NewGuid():N}@bank.com");

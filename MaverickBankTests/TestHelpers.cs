@@ -109,7 +109,7 @@ namespace MaverickBankTests
             return account;
         }
 
-        public static TransactionType SeedTransactionType(AppDbContext ctx, int id, string name)
+        public static TransactionType SeedTransactionType(AppDbContext ctx, string name)
         {
             var tt = new TransactionType { TypeName = name };
             ctx.TransactionTypes.Add(tt);

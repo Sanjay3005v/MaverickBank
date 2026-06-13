@@ -1,6 +1,6 @@
 ﻿using MaverickBank.DTOs.Auth;
-using MaverickBank.Models.User;
 using MaverickBank.Services.Auth;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 
@@ -37,7 +37,7 @@ namespace MaverickBankTests
         {
             var role = TestHelpers.SeedRole(_ctx, "Customer");
             var user = TestHelpers.SeedUser(_ctx, role.RoleId, "login@bank.com", isActive: true);
-            _jwt.Setup(j => j.GenerateToken(It.IsAny<Models.User>(), "Customer")).Returns("mock.jwt.token");
+            _jwt.Setup(j => j.GenerateToken(It.IsAny<MaverickBank.Models.User>(), "Customer")).Returns("mock.jwt.token");
 
             var result = await _sut.LoginAsync(new LoginRequestDto("login@bank.com", "Password@1"));
 
@@ -79,7 +79,7 @@ namespace MaverickBankTests
         {
             var role = TestHelpers.SeedRole(_ctx);
             TestHelpers.SeedUser(_ctx, role.RoleId, "exp@bank.com");
-            _jwt.Setup(j => j.GenerateToken(It.IsAny<Models.User>(), It.IsAny<string>())).Returns("tok");
+            _jwt.Setup(j => j.GenerateToken(It.IsAny<MaverickBank.Models.User>(), It.IsAny<string>())).Returns("tok");
 
             var result = await _sut.LoginAsync(new LoginRequestDto("exp@bank.com", "Password@1"));
 
@@ -87,3 +87,4 @@ namespace MaverickBankTests
                 Is.InRange(DateTime.UtcNow.AddMinutes(59), DateTime.UtcNow.AddMinutes(61)));
         }
     }
+}
