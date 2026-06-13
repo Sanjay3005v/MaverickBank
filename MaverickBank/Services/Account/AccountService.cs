@@ -31,12 +31,27 @@ namespace MaverickBank.Services.Account
             pageSize = pageSize <= 0 ? 10 : pageSize;
 
             var totalCount = await _context.Accounts.CountAsync();
-            var items = await _context.Accounts
+            var data = await _context.Accounts
+                .OrderBy(a => a.AccountId)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
+                .Join(_context.Branches, a => a.BranchId, b => b.BranchId, (a, b) => new { a, b })
+                .Join(_context.AccountTypes, x => x.a.AccountTypeId, t => t.AccountTypeId, (x, t) => new AccountResponseDto(
+                    x.a.AccountId,
+                    x.a.AccountNumber,
+                    x.a.Balance,
+                    x.a.Status,
+                    x.a.OpenedDate,
+                    x.a.ClosedDate,
+                    x.a.UserId,
+                    x.a.BranchId,
+                    x.b.BranchName,
+                    x.b.IFSCCode,
+                    x.b.AddressLine1,
+                    x.a.AccountTypeId,
+                    t.TypeName
+                ))
                 .ToListAsync();
-
-            var data = _mapper.Map<IEnumerable<AccountResponseDto>>(items);
             return new PagedResultDto<AccountResponseDto>(
                 data, pageNumber, pageSize, totalCount,
                 (int)Math.Ceiling(totalCount / (double)pageSize));
@@ -44,8 +59,25 @@ namespace MaverickBank.Services.Account
 
         public async Task<AccountResponseDto?> GetAccountByIdAsync(long accountId)
         {
-            var account = await _context.Accounts.FindAsync(accountId);
-            return account is null ? null : _mapper.Map<AccountResponseDto>(account);
+            return await _context.Accounts
+                .Where(a => a.AccountId == accountId)
+                .Join(_context.Branches, a => a.BranchId, b => b.BranchId, (a, b) => new { a, b })
+                .Join(_context.AccountTypes, x => x.a.AccountTypeId, t => t.AccountTypeId, (x, t) => new AccountResponseDto(
+                    x.a.AccountId,
+                    x.a.AccountNumber,
+                    x.a.Balance,
+                    x.a.Status,
+                    x.a.OpenedDate,
+                    x.a.ClosedDate,
+                    x.a.UserId,
+                    x.a.BranchId,
+                    x.b.BranchName,
+                    x.b.IFSCCode,
+                    x.b.AddressLine1,
+                    x.a.AccountTypeId,
+                    t.TypeName
+                ))
+                .FirstOrDefaultAsync();
         }
 
         public async Task<AccountResponseDto> CreateAccountAsync(CreateAccountDto dto)
@@ -71,7 +103,7 @@ namespace MaverickBank.Services.Account
             await _context.SaveChangesAsync();
             await _auditLogService.LogAsync(dto.UserId, "Account Created", "Account", account.AccountId, newValues: JsonSerializer.Serialize(account));
             _logger.LogInformation("Created account {AccountId} for user {UserId}", account.AccountId, account.UserId);
-            return _mapper.Map<AccountResponseDto>(account);
+            return await GetAccountByIdAsync(account.AccountId) ?? throw new Exception("Failed to retrieve created account.");
         }
 
         public async Task<bool> UpdateAccountStatusAsync(long accountId, UpdateAccountDto dto, int performedByUserId)
@@ -133,13 +165,29 @@ namespace MaverickBank.Services.Account
 
             var totalCount = await _context.Accounts
                 .Where(a => a.UserId == userId).CountAsync();
-            var items = await _context.Accounts
+            var data = await _context.Accounts
                 .Where(a => a.UserId == userId)
+                .OrderBy(a => a.AccountId)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
+                .Join(_context.Branches, a => a.BranchId, b => b.BranchId, (a, b) => new { a, b })
+                .Join(_context.AccountTypes, x => x.a.AccountTypeId, t => t.AccountTypeId, (x, t) => new AccountResponseDto(
+                    x.a.AccountId,
+                    x.a.AccountNumber,
+                    x.a.Balance,
+                    x.a.Status,
+                    x.a.OpenedDate,
+                    x.a.ClosedDate,
+                    x.a.UserId,
+                    x.a.BranchId,
+                    x.b.BranchName,
+                    x.b.IFSCCode,
+                    x.b.AddressLine1,
+                    x.a.AccountTypeId,
+                    t.TypeName
+                ))
                 .ToListAsync();
 
-            var data = _mapper.Map<IEnumerable<AccountResponseDto>>(items);
             return new PagedResultDto<AccountResponseDto>(
                 data, pageNumber, pageSize, totalCount,
                 (int)Math.Ceiling(totalCount / (double)pageSize));

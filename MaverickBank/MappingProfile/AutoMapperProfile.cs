@@ -39,7 +39,6 @@ namespace MaverickBank.MappingProfile
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
                 .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore());
 
-            CreateMap<Models.Account, AccountResponseDto>();
             CreateMap<CreateAccountDto, Models.Account>()
                 .ForMember(dest => dest.AccountId, opt => opt.Ignore())
                 .ForMember(dest => dest.AccountNumber, opt => opt.Ignore())
