@@ -1,5 +1,6 @@
 ﻿using Asp.Versioning;
 using MaverickBank.DTOs.Account;
+using MaverickBank.Extensions;
 using MaverickBank.Services.Account;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -29,12 +30,16 @@ namespace MaverickBank.Controllers
         }
 
         [HttpGet("{id:long}")]
+        [Authorize]
         public async Task<ActionResult<AccountResponseDto>> GetAccountById(long id)
         {
             var account = await _accountService.GetAccountByIdAsync(id);
 
             if (account is null)
                 return NotFound(new { message = $"Account with ID {id} not found." });
+
+            if (!User.CanAccessUser(account.UserId))
+                return Forbid();
 
             return Ok(account);
         }
@@ -79,6 +84,9 @@ namespace MaverickBank.Controllers
         [Authorize]
         public async Task<ActionResult<IEnumerable<AccountResponseDto>>> GetAccountsByUserId(int userId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
+            if (!User.CanAccessUser(userId))
+                return Forbid();
+
             var accounts = await _accountService.GetAccountsByUserIdAsync(userId, pageNumber, pageSize);
             return Ok(accounts);
         }

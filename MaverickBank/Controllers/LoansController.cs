@@ -2,6 +2,7 @@
 using MaverickBank.DTOs.Loan;
 using MaverickBank.DTOs.Pagination;
 using MaverickBank.DTOs.Transaction;
+using MaverickBank.Extensions;
 using MaverickBank.Services.Loan;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +26,9 @@ namespace MaverickBank.Controllers
         [Authorize(Roles = "Customer")]
         public async Task<ActionResult<LoanResponseDto>> ApplyLoan(ApplyLoanDto dto)
         {
+            if (User.GetUserId() != dto.UserId)
+                return BadRequest(new { message = "You can only apply for a loan on your own behalf." });
+
             var loan = await _loanService.ApplyLoanAsync(dto);
 
             return Ok(loan);
@@ -34,6 +38,9 @@ namespace MaverickBank.Controllers
         [Authorize(Roles = "Customer,Employee,Admin")]
         public async Task<ActionResult<IEnumerable<LoanResponseDto>>> GetLoansByUserId(int userId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
+            if (!User.CanAccessUser(userId))
+                return Forbid();
+
             var loans = await _loanService.GetLoansByUserIdAsync(userId, pageNumber, pageSize);
 
             return Ok(loans);

@@ -1,6 +1,8 @@
 ﻿using Asp.Versioning;
 using MaverickBank.DTOs.Pagination;
 using MaverickBank.DTOs.Transaction;
+using MaverickBank.Extensions;
+using MaverickBank.Services.Account;
 using MaverickBank.Services.Transaction;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -15,16 +17,27 @@ namespace MaverickBank.Controllers
     public class TransactionsController : ControllerBase
     {
         private readonly ITransactionService _transactionService;
+        private readonly IAccountService _accountService;
 
-        public TransactionsController(ITransactionService transactionService)
+        public TransactionsController(ITransactionService transactionService, IAccountService accountService)
         {
             _transactionService = transactionService;
+            _accountService = accountService;
         }
 
         [HttpPost("deposit")]
         [Authorize(Roles = "Customer,Employee")]
         public async Task<ActionResult<TransactionResponseDto>> Deposit(DepositDto dto)
         {
+            if (!User.IsStaff())
+            {
+                var account = await _accountService.GetAccountByIdAsync(dto.AccountId);
+                if (account is null)
+                    return NotFound(new { message = "Account not found." });
+
+                if (!User.CanAccessUser(account.UserId))
+                    return Forbid();
+            }
             var transaction = await _transactionService.DepositAsync(dto);
 
             return Ok(transaction);
@@ -34,6 +47,15 @@ namespace MaverickBank.Controllers
         [Authorize(Roles = "Customer,Employee")]
         public async Task<ActionResult<TransactionResponseDto>> Withdraw(WithdrawDto dto)
         {
+            if (!User.IsStaff())
+            {
+                var account = await _accountService.GetAccountByIdAsync(dto.AccountId);
+                if (account is null)
+                    return NotFound(new { message = "Account not found." });
+
+                if (!User.CanAccessUser(account.UserId))
+                    return Forbid();
+            }
             var transaction = await _transactionService.WithdrawAsync(dto);
 
             return Ok(transaction);
@@ -44,6 +66,15 @@ namespace MaverickBank.Controllers
         [Authorize(Roles = "Customer,Employee")]
         public async Task<ActionResult<TransactionResponseDto>> Transfer(TransferDto dto)
         {
+            if (!User.IsStaff())
+            {
+                var fromAccount = await _accountService.GetAccountByIdAsync(dto.FromAccountId);
+                if (fromAccount is null)
+                    return NotFound(new { message = "Source account not found." });
+
+                if (!User.CanAccessUser(fromAccount.UserId))
+                    return Forbid();
+            }
             var transaction = await _transactionService.TransferAsync(dto);
 
             return Ok(transaction);
@@ -60,6 +91,15 @@ namespace MaverickBank.Controllers
         {
             if (filter == "daterange" && (!from.HasValue || !to.HasValue))
                 return BadRequest(new { message = "Both 'from' and 'to' dates are required for date range filter." });
+            if (!User.IsStaff())
+            {
+                var account = await _accountService.GetAccountByIdAsync(accountId);
+                if (account is null)
+                    return NotFound(new { message = "Account not found." });
+
+                if (!User.CanAccessUser(account.UserId))
+                    return Forbid();
+            }
 
             var transactions = await _transactionService.GetTransactionsByAccountIdAsync(
                 accountId, filter, from, to, pageNumber, pageSize);

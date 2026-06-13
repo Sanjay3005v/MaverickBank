@@ -1,5 +1,6 @@
 ﻿using Asp.Versioning;
 using MaverickBank.DTOs.Beneficiary;
+using MaverickBank.Extensions;
 using MaverickBank.Services.Beneficiary;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -23,6 +24,8 @@ namespace MaverickBank.Controllers
         [HttpPost]
         public async Task<ActionResult<BeneficiaryResponseDto>> AddBeneficiary(AddBeneficiaryDto dto)
         {
+            if (!User.CanAccessUser(dto.UserId))
+                return Forbid();
             var beneficiary = await _beneficiaryService.AddBeneficiaryAsync(dto);
 
             return Ok(beneficiary);
@@ -31,6 +34,8 @@ namespace MaverickBank.Controllers
         [HttpGet("user/{userId:int}")]
         public async Task<ActionResult<IEnumerable<BeneficiaryResponseDto>>> GetByUserId(int userId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
+            if (!User.CanAccessUser(userId))
+                return Forbid();
             var beneficiaries = await _beneficiaryService.GetBeneficiariesByUserIdAsync(userId, pageNumber, pageSize);
 
             return Ok(beneficiaries);

@@ -1,5 +1,6 @@
 ﻿using Asp.Versioning;
 using MaverickBank.DTOs.User;
+using MaverickBank.Extensions;
 using MaverickBank.Services.User;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -30,6 +31,8 @@ namespace MaverickBank.Controllers
         [Authorize]
         public async Task<ActionResult<UserResponseDto>> GetUserById(int id)
         {
+            if (!User.CanAccessUser(id))
+                return Forbid();
             var user = await _userService.GetUserByIdAsync(id);
             if (user is null)
                 return NotFound(new { message = $"User with ID {id} not found." });
@@ -39,7 +42,7 @@ namespace MaverickBank.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin,Employee")]
-        public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetAllUsers([FromQuery] int pageNumber = 1,[FromQuery] int pageSize = 10)
+        public async Task<ActionResult<IEnumerable<UserResponseDto>>> GetAllUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var users = await _userService.GetAllUsersAsync(pageNumber, pageSize);
             return Ok(users);
@@ -49,6 +52,8 @@ namespace MaverickBank.Controllers
         [Authorize]
         public async Task<IActionResult> UpdateUser(int id, UpdateUserDto dto)
         {
+            if (!User.CanAccessUser(id))
+                return Forbid();
             var updated = await _userService.UpdateUserAsync(id, dto);
             if (!updated)
                 return NotFound(new { message = $"User with ID {id} not found." });
