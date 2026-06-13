@@ -44,6 +44,13 @@ namespace MaverickBank.Controllers
         [HttpDelete("{beneficiaryId:int}")]
         public async Task<IActionResult> DeleteBeneficiary(int beneficiaryId)
         {
+            var ownerUserId = await _beneficiaryService.GetBeneficiaryOwnerUserIdAsync(beneficiaryId);
+
+            if (ownerUserId is null)
+                return NotFound(new { message = $"Beneficiary with ID {beneficiaryId} not found." });
+
+            if (!User.CanAccessUser(ownerUserId.Value))
+                return Forbid();
             var deleted = await _beneficiaryService.DeleteBeneficiaryAsync(beneficiaryId);
 
             if (!deleted)

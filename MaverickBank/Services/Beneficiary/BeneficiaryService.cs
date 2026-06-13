@@ -83,5 +83,12 @@ namespace MaverickBank.Services.Beneficiary
 
             return _mapper.Map<IEnumerable<BranchResponseDto>>(branches);
         }
+        public async Task<int?> GetBeneficiaryOwnerUserIdAsync(int beneficiaryId)
+        {
+            var beneficiary = await _context.Beneficiaries
+                .FirstOrDefaultAsync(b => b.BeneficiaryId == beneficiaryId);
+
+            return beneficiary?.UserId;
+        }
     }
 }

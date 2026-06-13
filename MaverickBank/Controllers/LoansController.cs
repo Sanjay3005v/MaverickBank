@@ -54,6 +54,11 @@ namespace MaverickBank.Controllers
             if (loan is null)
                 return NotFound(new { message = $"Loan with ID {loanId} not found." });
 
+            var ownerUserId = await _loanService.GetLoanOwnerUserIdAsync(loanId);
+
+            if (ownerUserId is null || !User.CanAccessUser(ownerUserId.Value))
+                return Forbid();
+
             return Ok(loan);
         }
 
@@ -94,9 +99,7 @@ namespace MaverickBank.Controllers
 
         [HttpGet("pending")]
         [Authorize(Roles = "Employee,Admin")]
-        public async Task<ActionResult<PagedResultDto<LoanResponseDto>>> GetPendingLoanApplications(
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 10)
+        public async Task<ActionResult<PagedResultDto<LoanResponseDto>>> GetPendingLoanApplications([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
         {
             var loans = await _loanService.GetPendingLoanApplicationsAsync(pageNumber, pageSize);
             return Ok(loans);

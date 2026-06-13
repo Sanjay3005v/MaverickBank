@@ -8,5 +8,6 @@ namespace MaverickBank.Services.Beneficiary
         Task<BeneficiaryResponseDto> AddBeneficiaryAsync(AddBeneficiaryDto dto);
         Task<PagedResultDto<BeneficiaryResponseDto>> GetBeneficiariesByUserIdAsync(long userId, int pageNumber, int pageSize);
         Task<bool> DeleteBeneficiaryAsync(long beneficiaryId);
+        Task<int?> GetBeneficiaryOwnerUserIdAsync(int beneficiaryId);
     }
 }

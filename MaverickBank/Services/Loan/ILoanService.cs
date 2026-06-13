@@ -13,5 +13,6 @@ namespace MaverickBank.Services.Loan
         Task<bool> RejectLoanAsync(int loanApplicationId, RejectLoanDto dto);
         Task<PagedResultDto<LoanResponseDto>> GetPendingLoanApplicationsAsync(int pageNumber, int pageSize);
         Task<LoanResponseDto?> GetLoanByIdAsync(int loanId);
+        Task<int?> GetLoanOwnerUserIdAsync(int loanId);
     }
 }

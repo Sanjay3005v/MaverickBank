@@ -235,5 +235,17 @@ namespace MaverickBank.Services.Loan
                 data, pageNumber, pageSize, totalCount,
                 (int)Math.Ceiling(totalCount / (double)pageSize));
         }
+        public async Task<int?> GetLoanOwnerUserIdAsync(int loanId)
+        {
+            var ownerId = await _context.Loans
+                .Where(l => l.LoanId == loanId)
+                .Join(_context.LoanApplications,
+                    loan => loan.LoanApplicationId,
+                    app => app.LoanApplicationId,
+                    (loan, app) => app.UserId)
+                .FirstOrDefaultAsync();
+
+            return ownerId == 0 ? null : ownerId;
+        }
     }
 }
