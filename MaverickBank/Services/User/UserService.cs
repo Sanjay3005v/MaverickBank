@@ -26,6 +26,9 @@ namespace MaverickBank.Services.User
 
         public async Task<UserResponseDto> RegisterAsync(CreateUserDto dto)
         {
+            var age = CalculateAge(dto.DateOfBirth);
+            if (age < 18)
+                throw new InvalidOperationException("Customer must be at least 18 years old to register.");
             if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
                 throw new InvalidOperationException("Email is already registered.");
 
@@ -115,6 +118,14 @@ namespace MaverickBank.Services.User
             await _auditLogService.LogAsync(userId, $"User {(isActive ? "Activated" : "Deactivated")}", "User", userId);
             _logger.LogInformation("User {UserId} active status set to {IsActive}", userId, isActive);
             return true;
+        }
+        private static int CalculateAge(DateTime dob)
+        {
+            var today = DateTime.UtcNow.Date;
+            var age = today.Year - dob.Year;
+            if (dob.Date > today.AddYears(-age))
+                age--;
+            return age;
         }
     }
 }

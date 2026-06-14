@@ -18,7 +18,26 @@ namespace MaverickBank.MappingProfile
                 .ForMember(dest => dest.BranchId, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore());
 
-            CreateMap<Models.User, UserResponseDto>();
+            CreateMap<Models.User, UserResponseDto>()
+                .ConstructUsing(src => new UserResponseDto(
+                    src.UserId,
+                    src.RoleId,
+                    src.FirstName,
+                    src.LastName,
+                    src.Email,
+                    src.PhoneNumber,
+                    src.Gender,
+                    src.DateOfBirth,
+                    CalculateAge(src.DateOfBirth),
+                    src.AadhaarNumber,
+                    src.PANNumber,
+                    src.AddressLine1,
+                    src.AddressLine2,
+                    src.City,
+                    src.State,
+                    src.Pincode,
+                    src.IsActive
+                ));
             CreateMap<Models.User, UpdateUserDto>();
             CreateMap<CreateUserDto, Models.User>()
                 .ForMember(dest => dest.UserId, opt => opt.Ignore())
@@ -96,6 +115,14 @@ namespace MaverickBank.MappingProfile
                 .ForMember(dest => dest.MinimumTenureMonths, opt => opt.MapFrom(src => src.MinimumTenureMonths));
 
             CreateMap<Models.AuditLog, AuditLogResponseDto>();
+        }
+        private static int CalculateAge(DateTime dob)
+        {
+            var today = DateTime.UtcNow.Date;
+            var age = today.Year - dob.Year;
+            if (dob.Date > today.AddYears(-age))
+                age--;
+            return age;
         }
     }
 }

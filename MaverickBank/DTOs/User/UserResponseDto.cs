@@ -9,6 +9,7 @@
         string PhoneNumber,
         string Gender,
         DateTime DateOfBirth,
+        int Age,
         string AadhaarNumber,
         string PANNumber,
         string AddressLine1,

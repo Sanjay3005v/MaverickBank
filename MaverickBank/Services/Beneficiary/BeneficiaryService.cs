@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using MaverickBank.Data;
 using MaverickBank.DTOs.Beneficiary;
-using MaverickBank.DTOs.Branch;
 using MaverickBank.DTOs.Pagination;
 using Microsoft.EntityFrameworkCore;
 
@@ -73,15 +72,6 @@ namespace MaverickBank.Services.Beneficiary
             _logger.LogInformation("Deleted beneficiary {BeneficiaryId}", beneficiaryId);
 
             return true;
-        }
-        public async Task<IEnumerable<BranchResponseDto>> SearchBranchesByNameAsync(string bankName)
-        {
-            var branches = await _context.Branches
-                .Where(b => b.BranchName.Contains(bankName))
-                .OrderBy(b => b.BranchName)
-                .ToListAsync();
-
-            return _mapper.Map<IEnumerable<BranchResponseDto>>(branches);
         }
         public async Task<int?> GetBeneficiaryOwnerUserIdAsync(int beneficiaryId)
         {
