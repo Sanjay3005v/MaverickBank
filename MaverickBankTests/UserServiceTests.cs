@@ -159,5 +159,17 @@ namespace MaverickBankTests
             new(roleId, "First", "Last", email, phone, "Password@1",
                 "Male", new DateTime(1990, 1, 1), aadhaar, pan,
                 "123 St", null, "Chennai", "Tamil Nadu", "600001");
+
+        [Test]
+        public void RegisterAsync_UnderageUser_ThrowsInvalidOperation()
+        {
+            var role = TestHelpers.SeedRole(_ctx);
+            var dto = Build("minor@bank.com", "9000000099", "999999999999", "ZZCDE1234F", role.RoleId)
+                with
+            { DateOfBirth = DateTime.UtcNow.AddYears(-17) };
+
+            Assert.ThrowsAsync<InvalidOperationException>(() => _sut.RegisterAsync(dto));
+        }
     }
+
 }

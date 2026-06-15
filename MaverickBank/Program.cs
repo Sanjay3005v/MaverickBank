@@ -8,6 +8,7 @@ using MaverickBank.Services.AuditLog;
 using MaverickBank.Services.Auth;
 using MaverickBank.Services.Beneficiary;
 using MaverickBank.Services.Branch;
+using MaverickBank.Services.Email;
 using MaverickBank.Services.Loan;
 using MaverickBank.Services.Transaction;
 using MaverickBank.Services.User;
@@ -44,6 +45,7 @@ namespace MaverickBank
             builder.Services.AddScoped<ILoanTypeService, LoanTypeService>();
             builder.Services.AddScoped<IAuditLogService, AuditLogService>();
             builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddProblemDetails();
 
 

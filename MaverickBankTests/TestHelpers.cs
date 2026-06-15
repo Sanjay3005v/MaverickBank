@@ -178,5 +178,19 @@ namespace MaverickBankTests
             ctx.SaveChanges();
             return loan;
         }
+        public static MaverickBank.Models.PasswordResetOtp SeedPasswordResetOtp(AppDbContext ctx, int userId, string otp, DateTime expiryDate, bool isUsed = false)
+        {
+            var entry = new MaverickBank.Models.PasswordResetOtp
+            {
+                UserId = userId,
+                Otp = otp,
+                ExpiryDate = expiryDate,
+                IsUsed = isUsed,
+                CreatedAt = DateTime.UtcNow
+            };
+            ctx.PasswordResetOtps.Add(entry);
+            ctx.SaveChanges();
+            return entry;
+        }
     }
 }

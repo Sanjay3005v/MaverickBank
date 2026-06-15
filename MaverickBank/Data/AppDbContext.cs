@@ -24,6 +24,8 @@ namespace MaverickBank.Data
         public DbSet<LoanRepayment> LoanRepayments => Set<LoanRepayment>();
         public DbSet<AccountClosureRequest> AccountClosureRequests => Set<AccountClosureRequest>();
         public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+        public DbSet<PasswordResetOtp> PasswordResetOtps => Set<PasswordResetOtp>();
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -119,6 +121,11 @@ namespace MaverickBank.Data
                 .WithMany()
                 .HasForeignKey(a => a.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<PasswordResetOtp>()
+                .HasOne<User>()
+                .WithMany()
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

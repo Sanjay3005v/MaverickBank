@@ -1,5 +1,6 @@
 ﻿using MaverickBank.DTOs.Auth;
 using MaverickBank.Services.Auth;
+using MaverickBank.Services.Email;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
@@ -12,6 +13,7 @@ namespace MaverickBankTests
     {
         private MaverickBank.Data.AppDbContext _ctx = null!;
         private Mock<IJwtTokenService> _jwt = null!;
+        private Mock<IEmailService> _email = null!;
         private Mock<IConfiguration> _config = null!;
         private Mock<ILogger<AuthService>> _logger = null!;
         private AuthService _sut = null!;
@@ -21,12 +23,13 @@ namespace MaverickBankTests
         {
             _ctx = TestHelpers.CreateDbContext();
             _jwt = new Mock<IJwtTokenService>();
+            _email = new Mock<IEmailService>();
             _config = new Mock<IConfiguration>();
             _logger = new Mock<ILogger<AuthService>>();
 
             _config.Setup(c => c["JwtSettings:ExpiryMinutes"]).Returns("60");
 
-            _sut = new AuthService(_ctx, _jwt.Object, _config.Object, _logger.Object);
+            _sut = new AuthService(_ctx, _jwt.Object, _config.Object, _logger.Object, _email.Object);
         }
 
         [TearDown]
