@@ -75,8 +75,19 @@ namespace MaverickBank.Controllers
         }
 
         [HttpPost("repay")]
+        [Authorize(Roles = "Customer,Employee")]
         public async Task<IActionResult> RepayLoan(LoanRepaymentDto dto)
         {
+            if (!User.IsStaff())
+            {
+                var ownerUserId = await _loanService.GetLoanOwnerUserIdAsync((int)dto.LoanId);
+
+                if (ownerUserId is null)
+                    return NotFound(new { message = "Loan not found." });
+
+                if (!User.CanAccessUser(ownerUserId.Value))
+                    return Forbid();
+            }
             var repaid = await _loanService.RepayLoanAsync(dto);
 
             if (!repaid)

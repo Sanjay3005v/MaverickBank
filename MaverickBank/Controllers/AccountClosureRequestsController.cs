@@ -38,9 +38,11 @@ namespace MaverickBank.Controllers
         {
             var requests = await _service.GetPendingRequestsAsync(pageNumber, pageSize);
             return Ok(requests);
+
         }
 
         [HttpPut("{requestId:long}/approve")]
+        [Authorize(Roles = "Employee,Admin")]
         public async Task<IActionResult> ApproveRequest(long requestId, [FromQuery] int reviewedBy, [FromQuery] string remarks)
         {
             var approved = await _service.ApproveRequestAsync(requestId, reviewedBy, remarks);

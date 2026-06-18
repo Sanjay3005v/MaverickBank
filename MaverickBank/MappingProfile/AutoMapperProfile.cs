@@ -41,6 +41,7 @@ namespace MaverickBank.MappingProfile
             CreateMap<Models.User, UpdateUserDto>();
             CreateMap<CreateUserDto, Models.User>()
                 .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.RoleId, opt => opt.Ignore())
                 .ForMember(dest => dest.PasswordHash, opt => opt.Ignore())
                 .ForMember(dest => dest.IsActive, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())

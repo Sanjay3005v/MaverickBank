@@ -1,7 +1,6 @@
 ﻿namespace MaverickBank.DTOs.User
 {
     public record CreateUserDto(
-        int RoleId,
         string FirstName,
         string? LastName,
         string Email,

@@ -31,7 +31,7 @@ namespace MaverickBankTests
         public async Task RegisterAsync_ValidData_CreatesInactiveUser()
         {
             var role = TestHelpers.SeedRole(_ctx);
-            var result = await _sut.RegisterAsync(Build("new@bank.com", "9876543210", "123456789012", "ABCDE1234F", role.RoleId));
+            var result = await _sut.RegisterAsync(Build("new@bank.com", "9876543210", "123456789012", "ABCDE1234F"));
 
             Assert.That(result.Email, Is.EqualTo("new@bank.com"));
             Assert.That(result.IsActive, Is.False);
@@ -45,7 +45,7 @@ namespace MaverickBankTests
             TestHelpers.SeedUser(_ctx, role.RoleId, "dup@bank.com");
 
             Assert.ThrowsAsync<InvalidOperationException>(
-                () => _sut.RegisterAsync(Build("dup@bank.com", "9000000001", "100000000001", "BBCDE1234F", role.RoleId)));
+                () => _sut.RegisterAsync(Build("dup@bank.com", "9000000001", "100000000001", "BBCDE1234F")));
         }
 
         [Test]
@@ -55,21 +55,21 @@ namespace MaverickBankTests
             var user = TestHelpers.SeedUser(_ctx, role.RoleId, "a@bank.com");
 
             Assert.ThrowsAsync<InvalidOperationException>(
-                () => _sut.RegisterAsync(Build("b@bank.com", user.PhoneNumber, "200000000001", "CBCDE1234F", role.RoleId)));
+                () => _sut.RegisterAsync(Build("b@bank.com", user.PhoneNumber, "200000000001", "CBCDE1234F")));
         }
 
         [Test]
-        public void RegisterAsync_InvalidRole_ThrowsKeyNotFound()
+        public void RegisterAsync_CustomerRoleNotConfigured_ThrowsInvalidOperation()
         {
-            Assert.ThrowsAsync<KeyNotFoundException>(
-                () => _sut.RegisterAsync(Build("orphan@bank.com", "9111111111", "300000000001", "DBCDE1234F", 999)));
+            Assert.ThrowsAsync<InvalidOperationException>(() =>
+                _sut.RegisterAsync(Build("orphan@bank.com", "9111111111", "300000000001", "DBCDE1234F")));
         }
 
         [Test]
         public async Task RegisterAsync_PasswordIsStoredHashed()
         {
             var role = TestHelpers.SeedRole(_ctx);
-            await _sut.RegisterAsync(Build("hash@bank.com", "9222222222", "400000000001", "EBCDE1234F", role.RoleId));
+            await _sut.RegisterAsync(Build("hash@bank.com", "9222222222", "400000000001", "EBCDE1234F"));
 
             var dbUser = _ctx.Users.First(u => u.Email == "hash@bank.com");
             Assert.That(BCrypt.Net.BCrypt.Verify("Password@1", dbUser.PasswordHash), Is.True);
@@ -155,16 +155,16 @@ namespace MaverickBankTests
             Assert.That(await _sut.SetUserActiveStatusAsync(99999, true), Is.False);
         }
 
-        private static CreateUserDto Build(string email, string phone, string aadhaar, string pan, int roleId) =>
-            new(roleId, "First", "Last", email, phone, "Password@1",
-                "Male", new DateTime(1990, 1, 1), aadhaar, pan,
-                "123 St", null, "Chennai", "Tamil Nadu", "600001");
+        private static CreateUserDto Build(string email, string phone, string aadhaar, string pan) =>
+            new("First", "Last", email, phone, "Password@1",
+            "Male", new DateTime(1990, 1, 1), aadhaar, pan,
+            "123 St", null, "Chennai", "Tamil Nadu", "600001");
 
         [Test]
         public void RegisterAsync_UnderageUser_ThrowsInvalidOperation()
         {
             var role = TestHelpers.SeedRole(_ctx);
-            var dto = Build("minor@bank.com", "9000000099", "999999999999", "ZZCDE1234F", role.RoleId)
+            var dto = Build("minor@bank.com", "9000000099", "999999999999", "ZZCDE1234F")
                 with
             { DateOfBirth = DateTime.UtcNow.AddYears(-17) };
 

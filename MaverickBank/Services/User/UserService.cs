@@ -29,6 +29,7 @@ namespace MaverickBank.Services.User
             var age = CalculateAge(dto.DateOfBirth);
             if (age < 18)
                 throw new InvalidOperationException("Customer must be at least 18 years old to register.");
+
             if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
                 throw new InvalidOperationException("Email is already registered.");
 
@@ -41,10 +42,12 @@ namespace MaverickBank.Services.User
             if (await _context.Users.AnyAsync(u => u.PANNumber == dto.PANNumber))
                 throw new InvalidOperationException("PAN number is already registered.");
 
-            if (!await _context.Roles.AnyAsync(r => r.RoleId == dto.RoleId))
-                throw new KeyNotFoundException("Role not found.");
+            var customerRole = await _context.Roles
+                    .FirstOrDefaultAsync(r => r.RoleName == "Customer")
+                    ?? throw new InvalidOperationException("Customer role is not configured.");
 
             var user = _mapper.Map<Models.User>(dto);
+            user.RoleId = customerRole.RoleId;
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
             user.IsActive = false;
             user.CreatedAt = DateTime.UtcNow;
@@ -126,6 +129,42 @@ namespace MaverickBank.Services.User
             if (dob.Date > today.AddYears(-age))
                 age--;
             return age;
+        }
+        public async Task<UserResponseDto> RegisterEmployeeAsync(CreateUserDto dto, int createdByAdminId)
+        {
+            var age = CalculateAge(dto.DateOfBirth);
+            if (age < 18)
+                throw new InvalidOperationException("Employee must be at least 18 years old.");
+
+            if (await _context.Users.AnyAsync(u => u.Email == dto.Email))
+                throw new InvalidOperationException("Email is already registered.");
+
+            if (await _context.Users.AnyAsync(u => u.PhoneNumber == dto.PhoneNumber))
+                throw new InvalidOperationException("Phone number is already registered.");
+
+            if (await _context.Users.AnyAsync(u => u.AadhaarNumber == dto.AadhaarNumber))
+                throw new InvalidOperationException("Aadhaar number is already registered.");
+
+            if (await _context.Users.AnyAsync(u => u.PANNumber == dto.PANNumber))
+                throw new InvalidOperationException("PAN number is already registered.");
+
+            var employeeRole = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Employee")
+                ?? throw new InvalidOperationException("Employee role is not configured.");
+
+            var user = _mapper.Map<Models.User>(dto);
+            user.RoleId = employeeRole.RoleId;
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+            user.IsActive = true;
+            user.CreatedAt = DateTime.UtcNow;
+            user.UpdatedAt = DateTime.UtcNow;
+
+            _context.Users.Add(user);
+            await _context.SaveChangesAsync();
+
+            await _auditLogService.LogAsync(createdByAdminId, "Employee Account Created", "User", user.UserId, newValues: JsonSerializer.Serialize(dto));
+
+            _logger.LogInformation("Employee {UserId} created by admin {AdminId}", user.UserId, createdByAdminId);
+            return _mapper.Map<UserResponseDto>(user);
         }
     }
 }

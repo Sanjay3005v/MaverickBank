@@ -71,5 +71,13 @@ namespace MaverickBank.Controllers
 
             return NoContent();
         }
+
+        [HttpPost("employees")]
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult<UserResponseDto>> CreateEmployee(CreateUserDto dto)
+        {
+            var employee = await _userService.RegisterEmployeeAsync(dto, User.GetUserId());
+            return CreatedAtAction(nameof(GetUserById), new { id = employee.UserId }, employee);
+        }
     }
 }

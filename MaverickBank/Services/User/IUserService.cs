@@ -10,5 +10,7 @@ namespace MaverickBank.Services.User
         Task<PagedResultDto<UserResponseDto>> GetAllUsersAsync(int pageNumber, int pageSize);
         Task<bool> UpdateUserAsync(int userId, UpdateUserDto dto);
         Task<bool> SetUserActiveStatusAsync(int userId, bool isActive);
+        Task<UserResponseDto> RegisterEmployeeAsync(CreateUserDto dto, int createdByAdminId);
+
     }
 }

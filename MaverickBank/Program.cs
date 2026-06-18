@@ -4,6 +4,7 @@ using MaverickBank.MappingProfile;
 using MaverickBank.Middleware;
 using MaverickBank.Services.Account;
 using MaverickBank.Services.AccountClosureRequest;
+using MaverickBank.Services.AccountOpeningRequest;
 using MaverickBank.Services.AuditLog;
 using MaverickBank.Services.Auth;
 using MaverickBank.Services.Beneficiary;
@@ -46,6 +47,7 @@ namespace MaverickBank
             builder.Services.AddScoped<IAuditLogService, AuditLogService>();
             builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
             builder.Services.AddScoped<IEmailService, EmailService>();
+            builder.Services.AddScoped<IAccountOpeningRequestService, AccountOpeningRequestService>();
             builder.Services.AddProblemDetails();
 
 
