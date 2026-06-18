@@ -2,6 +2,7 @@
 using MaverickBank.DTOs.Account;
 using MaverickBank.Extensions;
 using MaverickBank.Services.Account;
+using MaverickBank.Services.Report;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Identity.Client;
@@ -15,10 +16,12 @@ namespace MaverickBank.Controllers
     public class AccountsController : ControllerBase
     {
         private readonly IAccountService _accountService;
+        private readonly IReportService _reportService;
 
-        public AccountsController(IAccountService accountService)
+        public AccountsController(IAccountService accountService, IReportService reportService)
         {
             _accountService = accountService;
+            _reportService = reportService;
         }
 
         [HttpGet]
@@ -89,6 +92,23 @@ namespace MaverickBank.Controllers
 
             var accounts = await _accountService.GetAccountsByUserIdAsync(userId, pageNumber, pageSize);
             return Ok(accounts);
+        }
+
+        [HttpGet("{id:long}/report")]
+        [Authorize]
+        public async Task<IActionResult> GetTransactionReport(long id, [FromQuery] DateTime? from = null, [FromQuery] DateTime? to = null)
+        {
+            var account = await _accountService.GetAccountByIdAsync(id);
+            if (account is null)
+                return NotFound(new { message = $"Account with ID {id} not found." });
+
+            if (!User.CanAccessUser(account.UserId))
+                return Forbid();
+
+            var pdf = await _reportService.GenerateTransactionReportAsync(id, from, to);
+
+            var filename = $"statement_{account.AccountNumber}_{DateTime.UtcNow:yyyyMMdd}.pdf";
+            return File(pdf, "application/pdf", filename);
         }
     }
 }

@@ -11,14 +11,17 @@ using MaverickBank.Services.Beneficiary;
 using MaverickBank.Services.Branch;
 using MaverickBank.Services.Email;
 using MaverickBank.Services.Loan;
+using MaverickBank.Services.Report;
 using MaverickBank.Services.Transaction;
 using MaverickBank.Services.User;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using QuestPDF.Infrastructure;
 using System.IdentityModel.Tokens.Jwt;
 using System.Text;
+
 
 
 
@@ -48,6 +51,7 @@ namespace MaverickBank
             builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
             builder.Services.AddScoped<IEmailService, EmailService>();
             builder.Services.AddScoped<IAccountOpeningRequestService, AccountOpeningRequestService>();
+            builder.Services.AddScoped<IReportService, ReportService>();
             builder.Services.AddProblemDetails();
 
 
@@ -122,6 +126,7 @@ namespace MaverickBank
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 
+            QuestPDF.Settings.License = LicenseType.Community;
 
             var app = builder.Build();
 
