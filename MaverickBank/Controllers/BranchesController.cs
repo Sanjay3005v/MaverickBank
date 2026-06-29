@@ -1,4 +1,4 @@
-﻿using Asp.Versioning;
+using Asp.Versioning;
 using MaverickBank.DTOs.Branch;
 using MaverickBank.Services.Branch;
 using Microsoft.AspNetCore.Authorization;
@@ -39,7 +39,7 @@ namespace MaverickBank.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Employee")]
         public async Task<ActionResult<BranchResponseDto>> CreateBranch(CreateBranchDto dto)
         {
             var created = await _branchService.CreateBranchAsync(dto);

@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using MaverickBank.Data;
 using MaverickBank.DTOs.Pagination;
 using MaverickBank.DTOs.Transaction;

@@ -1,4 +1,4 @@
-﻿namespace MaverickBank.DTOs.Loan
+namespace MaverickBank.DTOs.Loan
 {
     public record LoanResponseDto(
         long LoanId,
@@ -11,6 +11,11 @@
         decimal OutstandingAmount,
         DateTime StartDate,
         DateTime EndDate,
-        string LoanStatus
+        string LoanStatus,
+        int UserId,
+        decimal RequestedAmount,
+        string Purpose,
+        decimal MonthlyIncome,
+        string ApplicantName
     );
 }

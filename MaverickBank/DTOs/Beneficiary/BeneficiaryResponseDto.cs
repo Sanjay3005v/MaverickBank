@@ -1,4 +1,4 @@
-﻿namespace MaverickBank.DTOs.Beneficiary
+namespace MaverickBank.DTOs.Beneficiary
 {
     public record BeneficiaryResponseDto(
     int BeneficiaryId,
@@ -8,6 +8,7 @@
     string BankName,
     string BranchName,
     string IFSCCode,
+    long? AccountId,
     DateTime CreatedAt
 );
 }

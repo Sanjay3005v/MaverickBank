@@ -1,4 +1,4 @@
-﻿namespace MaverickBank.DTOs.Transaction
+namespace MaverickBank.DTOs.Transaction
 {
     public record TransferDto(
         long FromAccountId,

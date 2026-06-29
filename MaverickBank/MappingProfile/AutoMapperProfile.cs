@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using MaverickBank.DTOs.Account;
 using MaverickBank.DTOs.AuditLog;
 using MaverickBank.DTOs.Beneficiary;
@@ -86,7 +86,12 @@ namespace MaverickBank.MappingProfile
                     src.OutstandingAmount,
                     src.StartDate,
                     src.EndDate,
-                    src.LoanStatus
+                    src.LoanStatus,
+                    0,
+                    src.ApprovedAmount,
+                    "N/A",
+                    0m,
+                    ""
                 ));
             CreateMap<Models.LoanApplication, LoanResponseDto>()
                 .ConstructUsing(src => new LoanResponseDto(
@@ -95,12 +100,17 @@ namespace MaverickBank.MappingProfile
                     0L,
                     0m,
                     0m,
-                    0,
+                    src.TenureMonths,
                     0m,
                     0m,
                     DateTime.MinValue,
                     DateTime.MinValue,
-                    src.ApplicationStatus
+                    src.ApplicationStatus,
+                    src.UserId,
+                    src.RequestedAmount,
+                    src.Purpose,
+                    src.MonthlyIncome,
+                    ""
                 ));
             CreateMap<ApplyLoanDto, Models.LoanApplication>()
                 .ForMember(dest => dest.LoanApplicationId, opt => opt.Ignore())

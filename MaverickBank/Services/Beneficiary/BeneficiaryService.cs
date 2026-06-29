@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using MaverickBank.Data;
 using MaverickBank.DTOs.Beneficiary;
 using MaverickBank.DTOs.Pagination;
@@ -31,6 +31,12 @@ namespace MaverickBank.Services.Beneficiary
 
             var beneficiary = _mapper.Map<Models.Beneficiary>(dto);
             beneficiary.CreatedAt = DateTime.UtcNow;
+
+            var targetAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.AccountNumber == dto.AccountNumber);
+            if (targetAccount != null)
+            {
+                beneficiary.AccountId = targetAccount.AccountId;
+            }
 
             _context.Beneficiaries.Add(beneficiary);
 

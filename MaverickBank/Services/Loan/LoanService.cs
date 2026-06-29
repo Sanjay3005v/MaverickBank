@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using MaverickBank.Data;
 using MaverickBank.DTOs.Loan;
 using MaverickBank.DTOs.Pagination;
@@ -103,7 +103,12 @@ namespace MaverickBank.Services.Loan
                     l.OutstandingAmount,
                     l.StartDate,
                     l.EndDate,
-                    l.LoanStatus
+                    l.LoanStatus,
+                    0,
+                    0m,
+                    "",
+                    0m,
+                    ""
                 )).FirstOrDefaultAsync();
         }
 
@@ -221,18 +226,41 @@ namespace MaverickBank.Services.Loan
 
             var query = _context.LoanApplications
                 .Where(l => l.ApplicationStatus == "Pending")
-                .OrderBy(l => l.AppliedDate);
+                .Join(
+                    _context.Users,
+                    app => app.UserId,
+                    user => user.UserId,
+                    (app, user) => new { app, user }
+                )
+                .OrderBy(x => x.app.AppliedDate);
 
             var totalCount = await query.CountAsync();
 
             var applications = await query
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
+                .Select(x => new LoanResponseDto(
+                    0L,
+                    x.app.LoanApplicationId,
+                    0L,
+                    0m,
+                    0m,
+                    x.app.TenureMonths,
+                    0m,
+                    0m,
+                    DateTime.MinValue,
+                    DateTime.MinValue,
+                    x.app.ApplicationStatus,
+                    x.app.UserId,
+                    x.app.RequestedAmount,
+                    x.app.Purpose,
+                    x.app.MonthlyIncome,
+                    x.user.FirstName + " " + x.user.LastName
+                ))
                 .ToListAsync();
 
-            var data = _mapper.Map<IEnumerable<LoanResponseDto>>(applications);
             return new PagedResultDto<LoanResponseDto>(
-                data, pageNumber, pageSize, totalCount,
+                applications, pageNumber, pageSize, totalCount,
                 (int)Math.Ceiling(totalCount / (double)pageSize));
         }
         public async Task<int?> GetLoanOwnerUserIdAsync(int loanId)

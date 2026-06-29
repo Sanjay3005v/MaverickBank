@@ -1,4 +1,4 @@
-﻿using MaverickBank.DTOs.Transaction;
+using MaverickBank.DTOs.Transaction;
 using MaverickBank.Services.AuditLog;
 using MaverickBank.Services.Transaction;
 using Microsoft.Extensions.Logging;

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace MaverickBank.Models
@@ -31,6 +31,8 @@ namespace MaverickBank.Models
         [Required]
         [StringLength(11)]
         public string IFSCCode { get; set; } = string.Empty;
+
+        public long? AccountId { get; set; }
 
         [Required]
         public DateTime CreatedAt { get; set; }
